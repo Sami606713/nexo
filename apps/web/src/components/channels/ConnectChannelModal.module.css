@@ -1,0 +1,17 @@
+.tile {
+  padding: var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--mantine-color-default-border);
+  transition: border-color 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+.tile:hover:not(:disabled) {
+  border-color: var(--mantine-primary-color-filled);
+  background-color: var(--mantine-color-default-hover);
+  transform: translateY(-1px);
+}
+
+.tile:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

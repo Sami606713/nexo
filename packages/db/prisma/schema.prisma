@@ -1,0 +1,674 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Auth.js (Prisma adapter) ─────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  memberships  Membership[]
+  ownedBrands  Brand[]        @relation("BrandOwner")
+  subscription Subscription?
+  creditLedger CreditLedger[]
+  apiKeys      ApiKey[]
+  postGroups   PostGroup[]    @relation("PostAuthor")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ───────────────────────── Billing & credits ─────────────────────────
+
+enum Plan {
+  TRIAL
+  STARTER
+  TEAM
+  AGENCY
+  ENTERPRISE
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  plan             Plan      @default(TRIAL)
+  status           String    @default("trialing") // trialing | active | past_due | canceled
+  stripeCustomerId String?   @unique
+  stripeSubId      String?   @unique
+  periodStart      DateTime  @default(now())
+  periodEnd        DateTime?
+  resetDay         Int       @default(1) // day of month credits refill
+  creditsMonthly   Int       @default(50)
+  creditsUsed      Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Append-only. Negative delta = spend, positive = refill/refund.
+model CreditLedger {
+  id        String   @id @default(cuid())
+  userId    String // the brand OWNER whose pool is charged
+  brandId   String?
+  actorId   String? // who triggered it
+  delta     Int
+  reason    String // caption | image | rewrite | hashtags | reply_suggest | campaign | workflow_run | refill | refund
+  refType   String?
+  refId     String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// ───────────────────────── Brands & team ─────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  CLIENT
+}
+
+model Brand {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  website     String?
+  description String?  @db.Text
+  voice       String?  @db.Text // tone / style guidance for AI
+  audience    String?  @db.Text
+  avoid       String?  @db.Text // words/topics AI must avoid
+  logos       Json     @default("[]") // [{url, kind}]
+  colors      Json     @default("[]") // ["#112233"]
+  timezone    String   @default("UTC")
+  weekStart   Int      @default(1) // 0=Sun, 1=Mon
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner           User             @relation("BrandOwner", fields: [ownerId], references: [id])
+  memberships     Membership[]
+  invites         Invite[]
+  channels        Channel[]
+  postGroups      PostGroup[]
+  labels          Label[]
+  hashtagLibs     HashtagLibrary[]
+  media           MediaAsset[]
+  campaigns       Campaign[]
+  calendarShares  CalendarShare[]
+  workflows       Workflow[]
+  aiAgents        AIAgent[]
+  conversations   Conversation[]
+  replySnippets   ReplySnippet[]
+  bioPages        BioPage[]
+  designs         Design[]
+  wooStores       WooStore[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  brandId   String
+  role      Role
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, brandId])
+}
+
+model Invite {
+  id         String    @id @default(cuid())
+  brandId    String
+  email      String
+  role       Role
+  token      String    @unique
+  invitedBy  String
+  acceptedAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+}
+
+// ───────────────────────── Channels ─────────────────────────
+
+enum Network {
+  FACEBOOK
+  INSTAGRAM
+  X
+  LINKEDIN
+  LINKEDIN_PAGE
+  PINTEREST
+  TIKTOK
+  YOUTUBE
+  THREADS
+  BLUESKY
+  MASTODON
+  TELEGRAM
+  DISCORD
+  SLACK
+  GOOGLE_BUSINESS
+  CUSTOM_WEBHOOK
+}
+
+enum ChannelHealth {
+  OK
+  NEEDS_RECONNECT
+  ERROR
+}
+
+model Channel {
+  id             String        @id @default(cuid())
+  brandId        String
+  network        Network
+  externalId     String // account id on the network
+  name           String
+  username       String?
+  avatarUrl      String?
+  /// Encrypted JSON of Credentials (see @postline/core crypto). Never sent to the client.
+  credentialsEnc String        @db.Text
+  expiresAt      DateTime?
+  scopes         String[]
+  health         ChannelHealth @default(OK)
+  lastError      Json?
+  /// Per-network extras: selected board/location/server, webhook config, etc.
+  extras         Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  /// Inbox: pull DMs/comments/mentions for this channel (FB/IG only).
+  inboxEnabled   Boolean       @default(false)
+
+  brand         Brand            @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  posts         Post[]
+  slots         PostingSlot[]
+  conversations Conversation[]
+  metrics       ChannelMetric[]
+
+  @@unique([brandId, network, externalId])
+  @@index([brandId])
+}
+
+model PostingSlot {
+  id        String @id @default(cuid())
+  channelId String
+  weekday   Int // 0-6
+  minute    Int // minutes after midnight in brand TZ
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────── Content ─────────────────────────
+
+enum PostStatus {
+  GENERATING
+  DRAFT
+  PENDING_APPROVAL
+  SCHEDULED
+  PUBLISHING
+  POSTED
+  NEEDS_ATTENTION
+  ERROR
+}
+
+/// What the user edits: one caption + per-channel overrides, published to N channels.
+model PostGroup {
+  id          String     @id @default(cuid())
+  brandId     String
+  authorId    String
+  caption     String     @default("") @db.Text
+  status      PostStatus @default(DRAFT)
+  scheduledAt DateTime?
+  timezone    String? // per-post override of brand timezone
+  /// Per-network options (tiktok privacy, ig placement reel/story, pinterest boardId, ...)
+  options     Json       @default("{}")
+  notes       String?    @db.Text
+  score       Int?
+  campaignId  String?
+  lockedAt    DateTime? // set when publishing starts
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  brand    Brand           @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  author   User            @relation("PostAuthor", fields: [authorId], references: [id])
+  campaign Campaign?       @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  posts    Post[]
+  media    PostMedia[]
+  labels   PostLabel[]
+  approval Approval?
+  comments PostComment[]
+
+  @@index([brandId, status])
+  @@index([brandId, scheduledAt])
+  @@index([status, scheduledAt])
+}
+
+/// One publish target (group × channel).
+model Post {
+  id              String     @id @default(cuid())
+  groupId         String
+  channelId       String
+  captionOverride String?    @db.Text
+  status          PostStatus @default(DRAFT)
+  externalId      String?
+  /// Thread part ids (root first) from PublishResult.partIds — needed to delete whole threads.
+  partIds         String[]   @default([])
+  url             String?
+  error           Json?
+  attempts        Int        @default(0)
+  publishedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  group   PostGroup    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  channel Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  metrics PostMetric[]
+
+  @@unique([groupId, channelId])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  brandId   String
+  url       String
+  key       String? // storage key
+  mime      String
+  width     Int?
+  height    Int?
+  duration  Float?
+  sizeBytes Int
+  source    String   @default("upload") // upload | ai | studio | stock
+  alt       String?
+  createdAt DateTime @default(now())
+
+  brand Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  posts PostMedia[]
+
+  @@index([brandId])
+}
+
+model PostMedia {
+  groupId  String
+  mediaId  String
+  position Int
+
+  group PostGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  media MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, mediaId])
+}
+
+model Label {
+  id      String @id @default(cuid())
+  brandId String
+  name    String
+  color   String
+
+  brand Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  posts PostLabel[]
+
+  @@unique([brandId, name])
+}
+
+model PostLabel {
+  groupId String
+  labelId String
+
+  group PostGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  label Label     @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, labelId])
+}
+
+model HashtagLibrary {
+  id      String   @id @default(cuid())
+  brandId String
+  name    String
+  tags    String[]
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+model Approval {
+  id          String    @id @default(cuid())
+  groupId     String    @unique
+  requestedBy String
+  approverIds String[]
+  decision    String? // approved | rejected
+  decidedBy   String?
+  decidedAt   DateTime?
+  comment     String?
+  createdAt   DateTime  @default(now())
+
+  group PostGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  groupId   String
+  authorId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  group PostGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  brandId     String
+  prompt      String   @db.Text
+  goal        String   @default("awareness")
+  audience    String?
+  startDate   DateTime
+  duration    Int
+  postsPerDay Float?
+  count       Int
+  status      String   @default("GENERATING") // GENERATING | READY | ERROR
+  plan        Json? // outline returned by the planner step
+  channelIds  String[]
+  createdAt   DateTime @default(now())
+
+  brand Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  posts PostGroup[]
+}
+
+model CalendarShare {
+  id        String    @id @default(cuid())
+  brandId   String
+  token     String    @unique
+  createdBy String
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  brandId   String?
+  kind      String // approval_requested | approval_decided | publish_failed | channel_disconnected
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  prefix     String
+  hash       String    @unique
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────── Workflows (phase 7) ─────────────────────────
+
+model AIAgent {
+  id         String   @id @default(cuid())
+  brandId    String
+  name       String
+  prompt     String   @db.Text
+  model      String   @default("claude-sonnet-5-5")
+  imageGen   Boolean  @default(false)
+  webSearch  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+model Workflow {
+  id          String    @id @default(cuid())
+  brandId     String
+  name        String
+  active      Boolean   @default(false)
+  /// { type: "schedule"|"rss"|"webhook"|"woo_product"|"new_comment"|"new_mention"|"new_dm", config: {...} }
+  trigger     Json
+  /// Ordered steps: [{ id, type: "ai_agent"|"create_post"|"reply_comment"|"send_dm"|"filter"|"delay", config: {...} }]
+  steps       Json      @default("[]")
+  /// React Flow node positions etc.
+  layout      Json      @default("{}")
+  webhookSecret String  @unique @default(cuid())
+  /// Trigger bookkeeping (RSS seen GUIDs, last poll time, ...)
+  state       Json      @default("{}")
+  lastRunAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  brand Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  runs  WorkflowRun[]
+
+  @@index([brandId])
+}
+
+model WorkflowRun {
+  id         String    @id @default(cuid())
+  workflowId String
+  status     String    @default("RUNNING") // RUNNING | SUCCESS | FILTERED | ERROR
+  input      Json
+  /// [{ stepId, type, status, output, error, startedAt, finishedAt }]
+  log        Json      @default("[]")
+  error      String?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId, startedAt])
+}
+
+model WooStore {
+  id          String   @id @default(cuid())
+  brandId     String
+  url         String
+  /// Encrypted JSON {consumerKey, consumerSecret}
+  credentialsEnc String @db.Text
+  createdAt   DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────── Inbox (phase 6) ─────────────────────────
+
+model Conversation {
+  id            String    @id @default(cuid())
+  brandId       String
+  channelId     String
+  kind          String // DM | COMMENT | MENTION
+  externalId    String
+  /// For COMMENT: the post the comment is on (network id) + our Post id if known
+  postExternalId String?
+  postId        String?
+  participantName   String
+  participantHandle String?
+  participantAvatar String?
+  status        String    @default("OPEN") // OPEN | RESOLVED | ARCHIVED
+  assigneeId    String?
+  labels        String[]
+  unread        Boolean   @default(true)
+  lastMessageAt DateTime  @default(now())
+  lastMessagePreview String?
+  createdAt     DateTime  @default(now())
+
+  brand    Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  channel  Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([channelId, kind, externalId])
+  @@index([brandId, status, lastMessageAt])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  direction      String // IN | OUT
+  authorName     String?
+  text           String?  @db.Text
+  attachments    Json     @default("[]")
+  externalId     String?
+  sentById       String?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model ReplySnippet {
+  id      String @id @default(cuid())
+  brandId String
+  title   String
+  body    String @db.Text
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────── Analytics (phase 9) ─────────────────────────
+
+model PostMetric {
+  id          String   @id @default(cuid())
+  postId      String
+  capturedAt  DateTime @default(now())
+  impressions Int      @default(0)
+  reach       Int      @default(0)
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  saves       Int      @default(0)
+  clicks      Int      @default(0)
+  videoViews  Int      @default(0)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, capturedAt])
+}
+
+model ChannelMetric {
+  id         String   @id @default(cuid())
+  channelId  String
+  date       DateTime @db.Date
+  followers  Int      @default(0)
+  impressions Int     @default(0)
+  engagement Int      @default(0)
+  profileViews Int    @default(0)
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, date])
+}
+
+// ───────────────────────── Bio pages (phase 9) ─────────────────────────
+
+model BioPage {
+  id        String   @id @default(cuid())
+  brandId   String
+  slug      String   @unique
+  title     String
+  bio       String?
+  avatarUrl String?
+  /// { background, buttonStyle, font, accent }
+  theme     Json     @default("{}")
+  /// [{ id, type: "link"|"header"|"social"|"image"|"embed", label, url, ... }]
+  blocks    Json     @default("[]")
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand  Brand          @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  events BioPageEvent[]
+}
+
+model BioPageEvent {
+  id        String   @id @default(cuid())
+  pageId    String
+  kind      String // view | click
+  blockId   String?
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  page BioPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, createdAt])
+}
+
+// ───────────────────────── Studio (phase 5) ─────────────────────────
+
+model Design {
+  id         String   @id @default(cuid())
+  brandId    String
+  name       String
+  /// Format key, e.g. "instagram_post" (1080x1080), "instagram_story", "linkedin_post", "x_post", "custom"
+  format     String
+  width      Int
+  height     Int
+  /// Canvas document (our own JSON scene format, see apps/web studio)
+  doc        Json
+  previewUrl String?
+  isTemplate Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId, updatedAt])
+}

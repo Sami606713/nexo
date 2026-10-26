@@ -1,0 +1,118 @@
+.canvas {
+  position: relative;
+  height: calc(100dvh - 210px);
+  min-height: 520px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+  overflow: hidden;
+  background: var(--mantine-color-body);
+}
+
+/* React Flow theme from Mantine CSS variables (light & dark). */
+.canvas :global(.react-flow) {
+  --xy-background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8));
+  --xy-background-pattern-color: light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-4));
+  --xy-edge-stroke: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
+  --xy-edge-stroke-selected: var(--mantine-primary-color-filled);
+  --xy-controls-button-background-color: var(--mantine-color-body);
+  --xy-controls-button-background-color-hover: var(--mantine-color-default-hover);
+  --xy-controls-button-color: var(--mantine-color-text);
+  --xy-controls-button-border-color: var(--mantine-color-default-border);
+  --xy-node-boxshadow-selected: none;
+}
+
+.canvas :global(.react-flow__controls) {
+  box-shadow: var(--mantine-shadow-sm);
+  border-radius: var(--mantine-radius-md);
+  overflow: hidden;
+}
+
+.canvas :global(.react-flow__handle) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.node {
+  width: 300px;
+  padding: 12px 14px;
+  border-radius: var(--mantine-radius-md);
+  background: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  box-shadow: var(--mantine-shadow-xs);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.node:hover {
+  box-shadow: var(--mantine-shadow-sm);
+}
+
+.nodeSelected {
+  border-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 0 0 3px light-dark(var(--mantine-color-violet-1), rgba(132, 94, 247, 0.25));
+}
+
+.nodeError {
+  border-color: var(--mantine-color-red-filled);
+}
+
+.errorBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--mantine-color-red-filled);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--mantine-color-body);
+}
+
+.kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+}
+
+.panel {
+  height: calc(100dvh - 210px);
+  min-height: 520px;
+  overflow: auto;
+}
+
+.templateCard {
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.templateCard:hover {
+  border-color: var(--mantine-primary-color-filled);
+  transform: translateY(-1px);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--mantine-spacing-md);
+}
+
+@media (max-width: 62em) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .panel {
+    height: auto;
+    min-height: 0;
+  }
+}

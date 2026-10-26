@@ -1,0 +1,39 @@
+{
+  "name": "postline",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:up": "docker compose up -d",
+    "db:generate": "npm run generate -w @postline/db",
+    "db:push": "npm run push -w @postline/db",
+    "db:migrate": "npm run migrate -w @postline/db",
+    "seed:demo": "npx tsx --env-file=.env packages/db/seed/demo.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.30",
+    "vitest": "^3.2.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "allowScripts": {
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true,
+    "msgpackr-extract@3.0.4": true,
+    "prisma@6.19.3": true,
+    "@prisma/client@6.19.3": true
+  },
+  "overrides": {
+    "@prisma/client": "6.19.3"
+  }
+}
