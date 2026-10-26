@@ -12,7 +12,7 @@ export default async function SignupPage({ searchParams }: { searchParams: SP })
   const sp = await searchParams;
   const email = Array.isArray(sp.email) ? sp.email[0] : sp.email;
   return (
-    <AuthLayout title="Create your account" subtitle="Start your free trial — 50 AI credits, 3 channels, no card required.">
+    <AuthLayout title="Create your account" subtitle="Free for everyone. Connect your channels and publish your first post in minutes.">
       <SignupForm callbackUrl={safeCallback(sp.callbackUrl, "/onboarding")} googleEnabled={googleEnabled()} defaultEmail={email} />
     </AuthLayout>
   );

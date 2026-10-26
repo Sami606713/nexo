@@ -52,7 +52,7 @@ export function SignupForm({ callbackUrl, googleEnabled, defaultEmail }: { callb
       )}
       <form onSubmit={submit}>
         <Stack gap="sm">
-          <TextInput label="Full name" placeholder="Jane Doe" autoComplete="name" {...form.getInputProps("name")} />
+          <TextInput label="Full name" placeholder="Amara Okafor" autoComplete="name" {...form.getInputProps("name")} />
           <TextInput label="Work email" placeholder="you@company.com" autoComplete="email" {...form.getInputProps("email")} />
           <PasswordInput label="Password" placeholder="At least 8 characters" autoComplete="new-password" {...form.getInputProps("password")} />
           <Button type="submit" loading={loading} fullWidth mt="xs">
@@ -63,7 +63,7 @@ export function SignupForm({ callbackUrl, googleEnabled, defaultEmail }: { callb
       <Text size="sm" ta="center" c="dimmed">
         Already have an account?{" "}
         <Anchor component={Link} href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`} size="sm">
-          Sign in
+          Log in
         </Anchor>
       </Text>
     </Stack>

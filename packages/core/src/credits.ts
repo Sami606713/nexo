@@ -32,7 +32,8 @@ export interface PlanLimits {
 }
 
 export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
-  TRIAL: { label: "Trial", priceMonthlyUsd: 0, users: 1, channels: 3, creditsMonthly: 50 },
+  // Nexo is free for the community: every account gets this plan. Credits are a fair-use cap on AI cost.
+  TRIAL: { label: "Free", priceMonthlyUsd: 0, users: 10, channels: 25, creditsMonthly: 500 },
   STARTER: { label: "Starter", priceMonthlyUsd: 25, users: 1, channels: 5, creditsMonthly: 300 },
   TEAM: { label: "Team", priceMonthlyUsd: 69, users: 5, channels: 20, creditsMonthly: 1500 },
   AGENCY: { label: "Agency", priceMonthlyUsd: 179, users: 20, channels: 100, creditsMonthly: 5000 },

@@ -240,7 +240,7 @@ function MainNav() {
   );
   const settings = [
     b.can("members.manage") || b.can("posts.approve") ? { href: "/settings/team", label: "Team", icon: <IconUsers size={16} /> } : null,
-    b.can("billing.manage") ? { href: "/settings/billing", label: "Billing", icon: <IconCreditCard size={16} /> } : null,
+    // Nexo is free: no Billing page in the navigation (the route still exists for usage/credits history).
     { href: "/settings/labels", label: "Labels", icon: <IconTag size={16} /> },
     { href: "/settings/hashtags", label: "Hashtags", icon: <IconHash size={16} /> },
   ].filter((x): x is NonNullable<typeof x> => !!x);
