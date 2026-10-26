@@ -363,10 +363,6 @@ function AccountMenu() {
           <Menu.Item color="red" leftSection={<IconLogout size={16} />} onClick={() => signOut({ callbackUrl: "/login" })}>
             Sign out
           </Menu.Item>
-          <Menu.Divider />
-          <Text size="xs" c="dimmed" px="sm" py={6} lh={1.3}>
-            Demo build — not affiliated with Ocoya
-          </Text>
         </Menu.Dropdown>
       </Menu>
       <ActionIcon

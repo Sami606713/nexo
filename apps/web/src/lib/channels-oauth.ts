@@ -14,6 +14,8 @@ export interface OAuthState {
   network: Network;
   userId: string;
   exp: number;
+  /** Composio connect flow: the connected account created for this link. */
+  composioAccountId?: string;
 }
 
 function secret(): string {

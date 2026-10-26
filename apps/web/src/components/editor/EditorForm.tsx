@@ -390,7 +390,7 @@ export function EditorForm({ group, initialDraft, onSaved }: Props) {
               />
               <ChannelChecks checks={checks} />
               <MediaSection brandId={brandId} media={draft.media} onChange={(fn) => update((d) => ({ ...d, media: fn(d.media) }))} readOnly={readOnly} caption={draft.caption} networks={networks} />
-              <NetworkOptions networks={networks} options={draft.options} onChange={setOption} readOnly={readOnly} />
+              <NetworkOptions networks={networks} channels={selectedChannels} options={draft.options} onChange={setOption} readOnly={readOnly} />
             </Stack>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 5, lg: 4 }}>

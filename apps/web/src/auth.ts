@@ -34,8 +34,8 @@ const providers: Provider[] = [
     async sendVerificationRequest({ identifier, url }) {
       const how = await sendMail({
         to: identifier,
-        subject: `Sign in to ${process.env.APP_NAME ?? "Postline"}`,
-        text: `Sign in to ${process.env.APP_NAME ?? "Postline"}:\n\n${url}\n\nIf you did not request this, ignore this email.`,
+        subject: `Sign in to ${process.env.APP_NAME ?? "Nexo"}`,
+        text: `Sign in to ${process.env.APP_NAME ?? "Nexo"}:\n\n${url}\n\nIf you did not request this, ignore this email.`,
         html: simpleHtml("Sign in", "Click the button below to sign in. The link expires in 24 hours.", { label: "Sign in", url }),
       });
       if (how === "console") console.log(`[auth] Magic link for ${identifier}: ${url}`);

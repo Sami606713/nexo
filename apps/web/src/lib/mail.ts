@@ -9,7 +9,7 @@ export interface MailInput {
   html?: string;
 }
 
-const from = () => process.env.EMAIL_FROM ?? "Postline <no-reply@localhost>";
+const from = () => process.env.EMAIL_FROM ?? "Nexo <no-reply@localhost>";
 
 /**
  * Send an email. Order: Resend (RESEND_API_KEY) → SMTP (SMTP_URL / EMAIL_SERVER) → dev console log.

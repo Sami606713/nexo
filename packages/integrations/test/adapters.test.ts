@@ -12,7 +12,9 @@ afterEach(() => {
 });
 
 describe("registry", () => {
-  it("hides OAuth networks without client ids", () => {
+  it("hides OAuth networks without client ids (native mode)", () => {
+    vi.stubEnv("ENABLE_NATIVE_CHANNELS", "1");
+    vi.stubEnv("COMPOSIO_API_KEY", "");
     vi.stubEnv("LINKEDIN_CLIENT_ID", "");
     vi.stubEnv("X_CLIENT_ID", "");
     vi.stubEnv("META_APP_ID", "");

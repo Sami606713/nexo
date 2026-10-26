@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  IconBrandNotion,
+  IconBrandReddit,
   IconBrandBluesky,
   IconBrandDiscord,
   IconBrandFacebook,
@@ -37,6 +39,8 @@ export const NETWORK_ICONS: Record<Network, Icon> = {
   SLACK: IconBrandSlack,
   GOOGLE_BUSINESS: IconBrandGoogle,
   CUSTOM_WEBHOOK: IconWebhook,
+  REDDIT: IconBrandReddit,
+  NOTION: IconBrandNotion,
 };
 
 export const NETWORK_COLORS: Record<Network, string> = {
@@ -56,6 +60,8 @@ export const NETWORK_COLORS: Record<Network, string> = {
   SLACK: "#4A154B",
   GOOGLE_BUSINESS: "#4285F4",
   CUSTOM_WEBHOOK: "#868E96",
+  REDDIT: "#FF4500",
+  NOTION: "#191919",
 };
 
 export function NetworkIcon({ network, size = 16, color }: { network: Network; size?: number; color?: string }) {

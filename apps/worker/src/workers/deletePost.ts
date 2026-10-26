@@ -49,7 +49,7 @@ export async function processDeletePost(job: Job<DeletePostJob>): Promise<unknow
     return { ok: true, demo: true };
   }
 
-  const adapter = getAdapter(channel.network as Network);
+  const adapter = getAdapter(channel.network as Network, channel);
   if (!adapter?.delete) {
     await record({ ok: false, kind: "unsupported", message: "This network does not support deleting posts" });
     return { ok: false, reason: "unsupported" };

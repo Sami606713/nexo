@@ -8,9 +8,12 @@ import type { ReactNode } from "react";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { Providers } from "./providers";
 
+const APP = process.env.APP_NAME ?? "Nexo";
+
 export const metadata: Metadata = {
-  title: process.env.APP_NAME ?? "Postline",
-  description: "AI-powered social media management",
+  title: { default: `${APP} — AI social media management`, template: `%s · ${APP}` },
+  description: "Plan, write, design and publish social media posts with AI — one calendar for every channel.",
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

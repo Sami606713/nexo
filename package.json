@@ -15,7 +15,9 @@
     "db:generate": "npm run generate -w @postline/db",
     "db:push": "npm run push -w @postline/db",
     "db:migrate": "npm run migrate -w @postline/db",
-    "seed:demo": "npx tsx --env-file=.env packages/db/seed/demo.ts"
+    "seed:demo": "npx tsx --env-file=.env packages/db/seed/demo.ts",
+    "media:serve": "node scripts/media-server.mjs",
+    "media:tunnel": "docker run --rm --network host cloudflare/cloudflared:latest tunnel --no-autoupdate --url http://127.0.0.1:3100"
   },
   "devDependencies": {
     "turbo": "^2.5.4",
