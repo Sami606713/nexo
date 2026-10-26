@@ -142,14 +142,13 @@ interface ChannelSpec {
   er: number; // engagement rate
 }
 const CHANNELS: ChannelSpec[] = [
+  // Composio-connected networks only (see packages/integrations/src/composio/networks.ts).
   { network: "INSTAGRAM", name: "Northwind Coffee", username: "northwind.coffee", followers: 18400, dailyGrowth: 34, reach: 0.42, er: 0.058 },
   { network: "FACEBOOK", name: "Northwind Coffee Co.", username: "northwindcoffeeco", followers: 9200, dailyGrowth: 9, reach: 0.25, er: 0.031 },
-  { network: "TIKTOK", name: "Northwind Coffee", username: "northwindbrews", followers: 12600, dailyGrowth: 58, reach: 0.95, er: 0.072 },
+  { network: "YOUTUBE", name: "Northwind Coffee", username: "northwindbrews", followers: 12600, dailyGrowth: 58, reach: 0.95, er: 0.072 },
   { network: "X", name: "Northwind Coffee", username: "northwindcoffee", followers: 4100, dailyGrowth: 4, reach: 0.36, er: 0.022 },
-  { network: "LINKEDIN_PAGE", name: "Northwind Coffee Co.", username: "northwind-coffee-co", followers: 2300, dailyGrowth: 6, reach: 0.55, er: 0.041 },
-  { network: "THREADS", name: "Northwind Coffee", username: "northwind.coffee", followers: 3600, dailyGrowth: 15, reach: 0.4, er: 0.047 },
-  { network: "BLUESKY", name: "Northwind Coffee", username: "northwind.coffee", followers: 1450, dailyGrowth: 7, reach: 0.6, er: 0.064 },
-  { network: "MASTODON", name: "Northwind Coffee", username: "northwind@mastodon.social", followers: 820, dailyGrowth: 2, reach: 0.7, er: 0.052 },
+  { network: "LINKEDIN", name: "Northwind Coffee Co.", username: "northwind-coffee-co", followers: 2300, dailyGrowth: 6, reach: 0.55, er: 0.041 },
+  { network: "PINTEREST", name: "Northwind Coffee", username: "northwindcoffee", followers: 3600, dailyGrowth: 15, reach: 0.4, er: 0.047 },
 ];
 
 const MEDIA = [
@@ -253,7 +252,7 @@ async function main() {
         credentialsEnc: emptyCreds,
         scopes: [],
         health: "OK",
-        extras: json({ demo: true }),
+        extras: json({ demo: true, via: "composio" }),
         inboxEnabled: c.network === "FACEBOOK" || c.network === "INSTAGRAM",
       },
     });
@@ -303,7 +302,7 @@ async function main() {
   }
 
   // ── campaigns (posts attached below) ──
-  const elmChannels = [chBy("INSTAGRAM"), chBy("FACEBOOK"), chBy("TIKTOK"), chBy("THREADS")];
+  const elmChannels = [chBy("INSTAGRAM"), chBy("FACEBOOK"), chBy("YOUTUBE"), chBy("PINTEREST")];
   const campaignOpening = await prisma.campaign.create({
     data: {
       brandId: brand.id,
@@ -337,7 +336,7 @@ async function main() {
       postsPerDay: 0.4,
       count: 5,
       status: "READY",
-      channelIds: [chBy("INSTAGRAM").id, chBy("FACEBOOK").id, chBy("X").id, chBy("BLUESKY").id],
+      channelIds: [chBy("INSTAGRAM").id, chBy("FACEBOOK").id, chBy("X").id, chBy("LINKEDIN").id],
       plan: json([
         { dayOffset: 0, time: "09:00", angle: "Announce pre-orders", caption: "", hashtags: ["#holidayblend"] },
         { dayOffset: 3, time: "12:00", angle: "Tasting notes with Rosa", caption: "", hashtags: ["#tastingnotes"] },
@@ -408,7 +407,7 @@ async function main() {
     caption: "Latte art throwdown recap: 14 baristas, one rosetta that made the judges gasp. Full gallery on our page.",
     status: "NEEDS_ATTENTION",
     at: localAt(-3, 18, 0),
-    channels: [chBy("INSTAGRAM"), chBy("FACEBOOK"), chBy("THREADS")],
+    channels: [chBy("INSTAGRAM"), chBy("FACEBOOK"), chBy("PINTEREST")],
     labels: [labels[2]!.id],
     mediaIdx: 3,
     errorChannels: 1,
@@ -417,7 +416,7 @@ async function main() {
     caption: "Flash sale: 20% off all subscription first boxes this weekend only. Use code NORTHWIND20.",
     status: "ERROR",
     at: localAt(-1, 12, 0),
-    channels: [chBy("X"), chBy("LINKEDIN_PAGE")],
+    channels: [chBy("X"), chBy("LINKEDIN")],
     labels: [labels[3]!.id],
     mediaIdx: null,
     errorChannels: 2,
@@ -442,7 +441,7 @@ async function main() {
       caption,
       status: i === 4 ? "DRAFT" : "SCHEDULED",
       at: localAt(plan, [9, 12, 18, 8, 17][i]!, [0, 0, 0, 30, 30][i]!),
-      channels: [chBy("INSTAGRAM"), chBy("FACEBOOK"), chBy("X"), chBy("BLUESKY")],
+      channels: [chBy("INSTAGRAM"), chBy("FACEBOOK"), chBy("X"), chBy("LINKEDIN")],
       campaignId: campaignHoliday.id,
       labels: [labels[3]!.id, labels[0]!.id],
       mediaIdx: [1, 0, 2, 1, 1][i]!,
@@ -552,7 +551,7 @@ async function main() {
             shares: Math.round(eng * 0.11),
             saves: Math.round(eng * 0.08),
             clicks: Math.round(impressions * between(0.004, 0.016)),
-            videoViews: ch.network === "TIKTOK" ? Math.round(impressions * 1.1) : 0,
+            videoViews: ch.network === "YOUTUBE" ? Math.round(impressions * 1.1) : 0,
           },
         });
         metricCount++;

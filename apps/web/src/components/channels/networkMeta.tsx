@@ -1,5 +1,7 @@
 import type { ComponentType } from "react";
 import {
+  IconBrandNotion,
+  IconBrandReddit,
   IconBrandBluesky,
   IconBrandDiscord,
   IconBrandFacebook,
@@ -36,6 +38,8 @@ export const NETWORK_META: Record<Network, { label: string; color: string; Icon:
   SLACK: { label: NETWORK_LABELS.SLACK, color: "#4A154B", Icon: IconBrandSlack },
   GOOGLE_BUSINESS: { label: NETWORK_LABELS.GOOGLE_BUSINESS, color: "#4285F4", Icon: IconBrandGoogle },
   CUSTOM_WEBHOOK: { label: NETWORK_LABELS.CUSTOM_WEBHOOK, color: "#868E96", Icon: IconWebhook },
+  REDDIT: { label: NETWORK_LABELS.REDDIT, color: "#FF4500", Icon: IconBrandReddit },
+  NOTION: { label: NETWORK_LABELS.NOTION, color: "#191919", Icon: IconBrandNotion },
 };
 
 /** Round network badge (brand color background, white glyph). */

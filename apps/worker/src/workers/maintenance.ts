@@ -24,14 +24,14 @@ const BATCH = 200;
 export async function refreshExpiringCredentials(now = new Date()): Promise<{ refreshed: number; failed: number }> {
   const channels = await prisma.channel.findMany({
     where: { health: "OK", expiresAt: { not: null, lt: new Date(now.getTime() + REFRESH_AHEAD_MS) } },
-    select: { id: true, brandId: true, name: true, network: true, credentialsEnc: true },
+    select: { id: true, brandId: true, name: true, network: true, credentialsEnc: true, extras: true },
     take: BATCH,
     orderBy: { expiresAt: "asc" },
   });
   let refreshed = 0;
   let failed = 0;
   for (const ch of channels) {
-    const adapter = getAdapter(ch.network as Network);
+    const adapter = getAdapter(ch.network as Network, ch);
     if (!adapter?.refresh) continue;
     // Same per-channel lock as publish-post so a rotating refresh token is never used twice.
     const release = await tryLock(redis(), channelLockKey(ch.id));

@@ -102,7 +102,7 @@ async function publishLocked(job: Job<PublishPostJob>, post: LoadedPost): Promis
     return { externalId: `demo-${post.id}`, url: null };
   }
 
-  const adapter = getAdapter(network);
+  const adapter = getAdapter(network, channel);
   if (!adapter) {
     await markPostError(post.id, { kind: "unsupported", message: "network not supported yet" });
     await rollupGroup(group.id);

@@ -67,7 +67,7 @@ export default async function PublicBioPage({ params }: Props) {
           }}
           footer={
             <p style={{ marginTop: 28, fontSize: 12, opacity: 0.55, textAlign: "center" }}>
-              Made with {process.env.NEXT_PUBLIC_APP_NAME ?? "Postline"}
+              Made with {process.env.NEXT_PUBLIC_APP_NAME ?? "Nexo"}
             </p>
           }
         />

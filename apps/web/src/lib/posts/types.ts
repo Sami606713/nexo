@@ -10,6 +10,8 @@ export interface ChannelDTO {
   username: string | null;
   avatarUrl: string | null;
   health: ChannelHealth;
+  /** Present on channels from GET /channels (account data such as Pinterest boards, Notion pages). */
+  extras?: Record<string, unknown>;
 }
 
 export interface PostDTO {
@@ -135,4 +137,16 @@ export interface TikTokOptions {
 export interface PinterestOptions {
   boardId?: string;
   link?: string;
+}
+
+export interface RedditOptions {
+  subreddit?: string;
+  title?: string;
+  link?: string;
+  flairId?: string;
+}
+
+export interface NotionOptions {
+  parentPageId?: string;
+  title?: string;
 }

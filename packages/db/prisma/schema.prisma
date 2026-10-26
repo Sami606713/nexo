@@ -201,6 +201,8 @@ enum Network {
   SLACK
   GOOGLE_BUSINESS
   CUSTOM_WEBHOOK
+  REDDIT
+  NOTION
 }
 
 enum ChannelHealth {

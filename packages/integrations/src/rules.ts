@@ -16,11 +16,21 @@ type ExtraRule = (post: PostDraft) => ValidationIssue[];
 const hasVideo = (post: PostDraft) => post.media.some((m) => mediaKind(m) === "video");
 const nonEmptyString = (v: unknown) => typeof v === "string" && v.trim().length > 0;
 
+const firstLine = (s: string) => s.split("\n").find((l) => l.trim())?.trim() ?? "";
+
 const EXTRA_RULES: Partial<Record<Network, ExtraRule>> = {
-  PINTEREST: (post) =>
-    nonEmptyString(post.options.boardId)
-      ? []
-      : [{ level: "error", code: "option_invalid", message: "Pinterest needs a board — choose one in the Pinterest options" }],
+  // Pinterest: the board defaults to the connected account's first board, so no option is required.
+
+  REDDIT: (post) => {
+    const issues: ValidationIssue[] = [];
+    const sub = typeof post.options.subreddit === "string" ? post.options.subreddit.replace(/^\/?r\//i, "").trim() : "";
+    if (!sub) issues.push({ level: "error", code: "option_invalid", message: "Reddit needs a subreddit — set it in the Reddit options" });
+    const title = nonEmptyString(post.options.title) ? String(post.options.title) : firstLine(post.caption);
+    if (!title) issues.push({ level: "error", code: "option_invalid", message: "Reddit posts need a title — add a first line or set one in the Reddit options" });
+    else if (title.length > 300) issues.push({ level: "error", code: "option_invalid", message: "Reddit titles are limited to 300 characters" });
+    if (post.media.length) issues.push({ level: "warning", code: "unsupported_media", message: "Media isn't posted to Reddit — add a link in the Reddit options instead" });
+    return issues;
+  },
 
   TELEGRAM: (post) =>
     post.media.length > 0 && countCharacters("TELEGRAM", post.caption) > TELEGRAM_MEDIA_CAPTION_LIMIT

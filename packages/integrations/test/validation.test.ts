@@ -58,9 +58,13 @@ describe("validateAgainstLimits", () => {
 });
 
 describe("validateForNetwork (client)", () => {
-  it("requires a Pinterest board", () => {
-    expect(codes(validateForNetwork("PINTEREST", post("hi", [img()])))).toContain("option_invalid");
-    expect(codes(validateForNetwork("PINTEREST", post("hi", [img()], { boardId: "b1" })))).toEqual([]);
+  it("doesn't require a Pinterest board (it defaults to the account's first board)", () => {
+    expect(codes(validateForNetwork("PINTEREST", post("hi", [img()])))).toEqual([]);
+  });
+  it("requires a subreddit and a title for Reddit", () => {
+    expect(codes(validateForNetwork("REDDIT", post("Big news\nBody text")))).toEqual(["option_invalid"]);
+    expect(codes(validateForNetwork("REDDIT", post("Big news\nBody text", [], { subreddit: "r/coffee" })))).toEqual([]);
+    expect(codes(validateForNetwork("REDDIT", post("x".repeat(400), [], { subreddit: "coffee" })))).toContain("option_invalid");
   });
   it("warns about long Telegram media captions", () => {
     const i = validateForNetwork("TELEGRAM", post("a".repeat(1500), [img()]));

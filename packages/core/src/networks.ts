@@ -16,6 +16,8 @@ export const NETWORKS = [
   "SLACK",
   "GOOGLE_BUSINESS",
   "CUSTOM_WEBHOOK",
+  "REDDIT",
+  "NOTION",
 ] as const;
 export type Network = (typeof NETWORKS)[number];
 
@@ -53,6 +55,10 @@ export const NETWORK_LIMITS: Record<Network, NetworkLimits> = {
   SLACK: { caption: 40000, images: 10, imageMaxBytes: 100 * MB, videos: 1, videoMaxBytes: 100 * MB },
   GOOGLE_BUSINESS: { caption: 1500, images: 1, imageMaxBytes: 5 * MB, videos: 0 },
   CUSTOM_WEBHOOK: { caption: 200000, images: 20, videos: 1 },
+  // Reddit self-post body (title comes from the first line or the Reddit options); media isn't uploaded.
+  REDDIT: { caption: 40000, images: 0, videos: 0 },
+  // Notion page body; the first image becomes the page cover.
+  NOTION: { caption: 100000, images: 1, videos: 0 },
 };
 
 /** Telegram captions on media are limited to 1024; plain text messages 4096. */
@@ -75,4 +81,6 @@ export const NETWORK_LABELS: Record<Network, string> = {
   SLACK: "Slack",
   GOOGLE_BUSINESS: "Google Business",
   CUSTOM_WEBHOOK: "Custom webhook",
+  REDDIT: "Reddit",
+  NOTION: "Notion",
 };

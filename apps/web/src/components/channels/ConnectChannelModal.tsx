@@ -50,7 +50,7 @@ export function ConnectChannelModal({
   const choose = (net: NetworkOption) => {
     if (net.connectKind === "oauth2") {
       setRedirecting(net.network);
-      window.location.href = oauthStartUrl(net.network, brandId);
+      window.location.href = oauthStartUrl(net.network, brandId, net.via);
     } else setStep({ kind: "form", net });
   };
 

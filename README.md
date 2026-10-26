@@ -1,6 +1,6 @@
-# Ocoya Clone (internal name: Postline)
+# Nexo
 
-> Demo build for a video — not affiliated with Ocoya. Original code, design and copy.
+> AI-powered social media management. Internal package scope: `@postline/*`.
 
 AI-powered social media management: plan, write (with Claude), approve and publish posts across networks.
 Working name — rename freely. Architecture and contracts: [ARCHITECTURE.md](ARCHITECTURE.md). Product research & roadmap: [../OCOYA_ANALYSIS_AND_BUILD_PLAN.md](../OCOYA_ANALYSIS_AND_BUILD_PLAN.md).
@@ -27,11 +27,17 @@ AI_FAST_MODEL=agnes-3.0-flash
 IMAGE_MODEL=agnes-image-2.5-flash  # image generation on the same host; falls back to local artwork
 ```
 
-## Demo data
+## Demo data (optional)
 
-`npm run seed:demo` creates **Northwind Coffee Co.** for `test@example.com` / `password123`: 8 demo channels
+The app starts empty — sign up at `/signup`. For a pre-filled demo workspace, `npm run seed:demo` creates **Northwind Coffee Co.** for `test@example.com` / `password123`: 6 demo channels (Instagram, Facebook, YouTube, X, LinkedIn, Pinterest)
 (publishing is simulated), ~76 posts with analytics, campaigns, workflows with run history, inbox conversations,
 a bio page at `/b/northwind`, and a team. Safe to re-run.
+
+## Public site
+
+`/` landing page, `/features`, `/integrations`, `/pricing`, `/about`, `/contact` (emails `SUPPORT_EMAIL`), `/privacy`, `/terms`,
+plus `/login` and `/signup`. Pages live in `apps/web/src/app/(site)`, copy in `apps/web/src/components/site/content.ts`.
+The privacy policy and terms are starter drafts — have them reviewed before launch.
 
 ## Run locally
 

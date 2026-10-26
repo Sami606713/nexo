@@ -12,7 +12,7 @@ export async function sendInviteEmail(invite: Invite, brandName: string, inviter
   const url = appUrl(`/invite/${invite.token}`);
   const how = await sendMail({
     to: invite.email,
-    subject: `${inviterName} invited you to ${brandName} on ${process.env.APP_NAME ?? "Postline"}`,
+    subject: `${inviterName} invited you to ${brandName} on ${process.env.APP_NAME ?? "Nexo"}`,
     text: `${inviterName} invited you to join ${brandName} as ${invite.role.toLowerCase()}.\n\nAccept the invitation: ${url}\n\nThis link expires in 7 days.`,
     html: simpleHtml(
       `Join ${brandName}`,
