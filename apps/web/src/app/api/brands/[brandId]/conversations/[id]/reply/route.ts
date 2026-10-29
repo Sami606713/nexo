@@ -22,7 +22,7 @@ export const POST = route<Ctx>(async (req, { params }) => {
     where: { id: conv.channel.id },
     select: { network: true, externalId: true, credentialsEnc: true, extras: true },
   });
-  const provider = isDemoChannel(channel.extras) ? undefined : getInboxProvider(channel.network as Network);
+  const provider = isDemoChannel(channel.extras) ? undefined : getInboxProvider(channel.network as Network, channel);
 
   let externalId: string | null = null;
   if (provider) {

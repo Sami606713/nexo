@@ -1,5 +1,5 @@
 // Browser-safe campaign constants + schedule math, shared by the composer (client) and the campaigns API (server).
-import type { CampaignGoal } from "@postline/core";
+import { CREDIT_COST, type CampaignGoal } from "@postline/core";
 
 export const MAX_CAMPAIGN_POSTS = 30;
 export const MAX_CAMPAIGN_DAYS = 90;
@@ -54,5 +54,5 @@ export function campaignPostCount(days: number, freq: Frequency): { count: numbe
 }
 
 export function campaignCost(count: number, imagesPerPost: number): number {
-  return count * (1 + imagesPerPost);
+  return count * (CREDIT_COST.campaign + imagesPerPost * CREDIT_COST.image);
 }

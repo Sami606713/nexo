@@ -36,7 +36,7 @@ export interface ComposioCredentials extends Credentials {
 type Json = Record<string, unknown>;
 
 /** Composio wraps provider payloads differently per tool (`response_data`, `response_dict`, `data`, …). */
-function unwrap(data: unknown): Json {
+export function unwrap(data: unknown): Json {
   let cur: unknown = data;
   for (let i = 0; i < 3 && cur && typeof cur === "object"; i++) {
     const o = cur as Json;
@@ -49,7 +49,7 @@ function unwrap(data: unknown): Json {
 }
 
 /** Depth-first search for the first string value under any of `keys` (case-insensitive). */
-function findString(obj: unknown, keys: string[], depth = 0): string | undefined {
+export function findString(obj: unknown, keys: string[], depth = 0): string | undefined {
   if (!obj || typeof obj !== "object" || depth > 5) return undefined;
   const o = obj as Json;
   const byLower = new Map(Object.keys(o).map((k) => [k.toLowerCase(), k]));
@@ -75,7 +75,7 @@ function findMatch(obj: unknown, re: RegExp): string | undefined {
 /** Bounded copy of a provider response for diagnostics on the post. */
 const snippet = (data: unknown) => JSON.stringify(data ?? null).slice(0, 1500);
 
-function findArray(obj: unknown, keys: string[]): Json[] {
+export function findArray(obj: unknown, keys: string[]): Json[] {
   const o = unwrap(obj);
   for (const k of keys) if (Array.isArray(o[k])) return o[k] as Json[];
   if (Array.isArray(obj)) return obj as Json[];
@@ -109,7 +109,7 @@ export function publicMediaUrl(url: string): string {
 
 const cred = (c: Credentials) => c as ComposioCredentials;
 
-async function run<T = Json>(c: Credentials, slug: string, args: Json, action: string): Promise<T> {
+export async function run<T = Json>(c: Credentials, slug: string, args: Json, action: string): Promise<T> {
   try {
     return await executeTool<T>(slug, { connectedAccountId: cred(c).composioAccountId, userId: cred(c).composioUserId, arguments: args });
   } catch (err) {
@@ -241,7 +241,7 @@ async function publishNotion(post: ComposedPost, c: Credentials): Promise<Publis
 const LINKEDIN_API = "https://api.linkedin.com";
 const linkedinHeaders = () => ({ "LinkedIn-Version": process.env.LINKEDIN_API_VERSION || "202601", "X-Restli-Protocol-Version": "2.0.0" });
 
-async function proxy(c: Credentials, action: string, req: Omit<Parameters<typeof proxyRequest>[0], "connectedAccountId" | "userId">) {
+export async function proxy(c: Credentials, action: string, req: Omit<Parameters<typeof proxyRequest>[0], "connectedAccountId" | "userId">) {
   try {
     return await proxyRequest({ ...req, connectedAccountId: cred(c).composioAccountId, userId: cred(c).composioUserId });
   } catch (err) {

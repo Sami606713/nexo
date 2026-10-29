@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker, type Job } from "bullmq";
 import { prisma } from "@postline/db";
-import { InsufficientCreditsError, QUEUES, type AiGenerateJob, type CampaignPlanItem, type ImageGenRequest, type Network } from "@postline/core";
+import { CREDIT_COST, InsufficientCreditsError, QUEUES, type AiGenerateJob, type CampaignPlanItem, type ImageGenRequest, type Network } from "@postline/core";
 import { ai, brandContext, hasApiKey, images, offlineCampaign, withCredits } from "@postline/ai";
 import { log } from "../log";
 import { newRedis } from "../queues";
@@ -141,7 +141,7 @@ async function generateCampaignImages(
     };
     try {
       const rows = await withCredits(
-        { brandId, actorId, reason: "image", amount: opts.imagesPerPost, refType: "PostGroup", refId: g.id },
+        { brandId, actorId, reason: "image", amount: opts.imagesPerPost * CREDIT_COST.image, refType: "PostGroup", refId: g.id },
         async () => {
           const out = await images.generate(req);
           const created = [];

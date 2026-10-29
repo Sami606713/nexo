@@ -14,7 +14,7 @@ export const isDemoChannel = (extras: unknown) => !!extras && typeof extras === 
 
 /** Replies to this channel really reach the network. */
 export const isLiveChannel = (c: { network: Network | string; extras: unknown }) =>
-  !isDemoChannel(c.extras) && !!getInboxProvider(c.network as Network);
+  !isDemoChannel(c.extras) && !!getInboxProvider(c.network as Network, c);
 
 export const conversationSelect = {
   id: true,

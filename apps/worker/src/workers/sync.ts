@@ -47,7 +47,7 @@ export interface InboxEvent {
 }
 
 export interface SyncDeps {
-  provider?: (network: Network) => InboxProvider | undefined;
+  provider?: (network: Network, channel?: { extras?: unknown }) => InboxProvider | undefined;
   /** Queue a workflow run (defaults to QUEUES.workflowRun). */
   enqueueWorkflowRun?: (job: WorkflowRunJob) => Promise<unknown>;
   now?: () => Date;
@@ -228,7 +228,7 @@ export async function syncChannelInbox(channelId: string, deps: SyncDeps = {}, l
   if (channel.health === "NEEDS_RECONNECT") return empty("needs reconnect");
   const extras = (channel.extras ?? {}) as Record<string, unknown>;
   if (extras.demo === true) return empty("demo channel");
-  const provider = (deps.provider ?? getInboxProvider)(channel.network as Network);
+  const provider = (deps.provider ?? getInboxProvider)(channel.network as Network, channel);
   if (!provider) return empty("no inbox provider");
 
   const syncedAt = typeof extras.inboxSyncedAt === "string" ? new Date(extras.inboxSyncedAt) : null;
@@ -271,7 +271,7 @@ export async function enqueueInboxScan(queue: Queue): Promise<number> {
   const bucket = Math.floor(Date.now() / INBOX_SCAN_EVERY_MS);
   for (const ch of channels) {
     if ((ch.extras as Record<string, unknown> | null)?.demo === true) continue;
-    if (!getInboxProvider(ch.network as Network)) continue;
+    if (!getInboxProvider(ch.network as Network, ch)) continue;
     const data: SyncJob = { kind: "inbox", channelId: ch.id };
     // jobId per channel per 2-min bucket: a slow sync never piles up duplicates.
     await queue.add("inbox", data, { jobId: `inbox-${ch.id}-${bucket}`, removeOnComplete: 200, removeOnFail: 500, attempts: 2, backoff: { type: "exponential", delay: 30_000 } });

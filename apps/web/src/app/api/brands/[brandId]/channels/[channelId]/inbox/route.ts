@@ -16,10 +16,10 @@ export const PATCH = route<Ctx>(async (req, { params }) => {
   const { enabled } = await parseBody(req, z.object({ enabled: z.boolean() }));
   const ch = await prisma.channel.findFirst({ where: { id: channelId, brandId }, select: { id: true, network: true, extras: true } });
   if (!ch) throw notFound("Channel not found");
-  if (enabled && !inboxSupported(ch.network as Network)) throw badRequest("Inbox not supported for this network");
+  if (enabled && !inboxSupported(ch.network as Network, ch)) throw badRequest("Inbox not supported for this network");
   await prisma.channel.update({ where: { id: ch.id }, data: { inboxEnabled: enabled } });
   let syncing = false;
-  if (enabled && !isDemoChannel(ch.extras) && getInboxProvider(ch.network as Network)) {
+  if (enabled && !isDemoChannel(ch.extras) && getInboxProvider(ch.network as Network, ch)) {
     await enqueueSync({ kind: "inbox", channelId: ch.id });
     syncing = true;
   }

@@ -300,7 +300,7 @@ export function CampaignComposer() {
                 </Text>
               </Stack>
               <Group gap="sm">
-                <Tooltip label={`${count} × (1 caption + ${imagesPerPost} image${imagesPerPost === 1 ? "" : "s"})`} withArrow>
+                <Tooltip label={`${count} posts × (1 for the caption${imagesPerPost ? ` + 5 per image × ${imagesPerPost}` : ""})`} withArrow>
                   <Badge size="xl" variant="light" color={short ? "red" : "violet"} leftSection={<IconCoins size={16} />} radius="md">
                     {cost} credit{cost === 1 ? "" : "s"}
                   </Badge>

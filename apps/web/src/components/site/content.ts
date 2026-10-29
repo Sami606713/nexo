@@ -50,7 +50,7 @@ export const FEATURES: Record<
   inbox: {
     icon: "inbox",
     title: "Every reply in one inbox",
-    body: "Comments, mentions and messages in one place, with AI-suggested replies and team assignment.",
+    body: "Coming soon. Comments, mentions and messages in one place, with AI-suggested replies and team assignment.",
   },
   automations: {
     icon: "flow",

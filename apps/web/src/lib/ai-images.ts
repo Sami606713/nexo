@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma, type MediaAsset } from "@postline/db";
 import { images, withCredits } from "@postline/ai";
-import type { ImageGenRequest, Network } from "@postline/core";
+import { CREDIT_COST, type ImageGenRequest, type Network } from "@postline/core";
 import { storage } from "@/lib/storage";
 
 export const IMAGE_STYLES = ["photo", "illustration", "3d", "minimal", "brand"] as const;
@@ -52,7 +52,7 @@ export async function generateAndStoreImages(p: GenerateImagesParams): Promise<M
     colors: p.style === "brand" && colors.length ? colors : undefined,
   };
   return withCredits(
-    { brandId: p.brand.id, actorId: p.actorId, reason: "image", amount: count, refType: p.refType, refId: p.refId },
+    { brandId: p.brand.id, actorId: p.actorId, reason: "image", amount: count * CREDIT_COST.image, refType: p.refType, refId: p.refId },
     async () => {
       const generated = await images.generate(req);
       const rows: MediaAsset[] = [];
