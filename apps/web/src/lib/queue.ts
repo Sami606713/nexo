@@ -13,8 +13,11 @@ import {
 
 const g = globalThis as unknown as { __redis?: IORedis; __queues?: Map<string, Queue> };
 
-function connection(): IORedis {
-  g.__redis ??= new IORedis(process.env.REDIS_URL ?? "redis://127.0.0.1:6380", { maxRetriesPerRequest: null });
+export function connection(): IORedis {
+  const url = process.env.REDIS_URL;
+  if (!url && process.env.VERCEL) throw new Error("Redis isn't set up: add REDIS_URL (e.g. an Upstash rediss:// URL) to the project, then redeploy.");
+  // The web app only adds jobs: fail fast when Redis is unreachable instead of hanging the request until it times out.
+  g.__redis ??= new IORedis(url ?? "redis://127.0.0.1:6380", { maxRetriesPerRequest: 2, connectTimeout: 5_000 });
   return g.__redis;
 }
 

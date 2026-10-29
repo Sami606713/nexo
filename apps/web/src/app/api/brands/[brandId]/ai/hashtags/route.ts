@@ -5,12 +5,14 @@ import { readBody } from "@/lib/posts/body";
 import { requireBrand } from "@/lib/session";
 import { aiHashtagsInput } from "@/lib/posts/ai-inputs";
 import { brandChannels } from "@/lib/posts/ai-helpers";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Ctx = { params: Promise<{ brandId: string }> };
 
 export const POST = route<Ctx>(async (req, { params }) => {
   const { brandId } = await params;
   const access = await requireBrand(brandId, "posts.write");
+  await enforceRateLimit("ai", access.user.id);
   const input = await readBody(req, aiHashtagsInput);
   const { networks } = await brandChannels(access.brand.id, input.channelIds);
   const hashtags = await withCredits(

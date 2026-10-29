@@ -5,6 +5,7 @@ import { prisma, type MediaAsset } from "@postline/db";
 import { images, withCredits } from "@postline/ai";
 import { CREDIT_COST, type ImageGenRequest, type Network } from "@postline/core";
 import { storage } from "@/lib/storage";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const IMAGE_STYLES = ["photo", "illustration", "3d", "minimal", "brand"] as const;
 export type ImageStyleOption = (typeof IMAGE_STYLES)[number];
@@ -42,6 +43,9 @@ export interface GenerateImagesParams {
  */
 export async function generateAndStoreImages(p: GenerateImagesParams): Promise<MediaAsset[]> {
   const count = Math.max(1, Math.min(10, Math.floor(p.count)));
+  // Per-image speed limits (credits still cap the monthly total).
+  await enforceRateLimit("image", p.actorId, count);
+  await enforceRateLimit("imageDaily", p.actorId, count);
   const colors = brandColors(p.brand.colors);
   const req: ImageGenRequest = {
     prompt: p.prompt,

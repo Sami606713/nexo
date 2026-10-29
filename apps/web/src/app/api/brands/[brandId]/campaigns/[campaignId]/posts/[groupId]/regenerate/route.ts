@@ -7,6 +7,7 @@ import { requireBrand } from "@/lib/session";
 import { loadGroup } from "@/lib/posts/access";
 import { groupInclude, toGroupDTO } from "@/lib/posts/dto";
 import { angleFromNotes, loadCampaign, toCampaignDTO } from "@/lib/campaigns";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Ctx = { params: Promise<{ brandId: string; campaignId: string; groupId: string }> };
 
@@ -24,6 +25,7 @@ function withTags(text: string, tags: string[]): string {
 export const POST = route<Ctx>(async (_req, { params }) => {
   const { brandId, campaignId, groupId } = await params;
   const access = await requireBrand(brandId, "posts.write");
+  await enforceRateLimit("ai", access.user.id);
   const campaign = await loadCampaign(access, campaignId);
   const group = await loadGroup(access, groupId);
   if (group.campaignId !== campaign.id) throw notFound("Post isn't part of this campaign");

@@ -8,6 +8,7 @@ import { requireBrand } from "@/lib/session";
 import { aiPostInput } from "@/lib/posts/ai-inputs";
 import { brandChannels } from "@/lib/posts/ai-helpers";
 import { attachMediaToGroup, brandColors, defaultImageSize, generateAndStoreImages } from "@/lib/ai-images";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Ctx = { params: Promise<{ brandId: string }> };
 
@@ -20,6 +21,7 @@ export const maxDuration = 300;
 export const POST = route<Ctx>(async (req, { params }) => {
   const { brandId } = await params;
   const access = await requireBrand(brandId, "posts.write");
+  await enforceRateLimit("ai", access.user.id);
   const input = await readBody(req, aiPostInput);
   const { channels, networks } = await brandChannels(access.brand.id, input.channelIds);
 

@@ -11,15 +11,19 @@ import { prisma } from "@postline/db";
 import { authConfig } from "./auth.config";
 import { sendMail, simpleHtml } from "./lib/mail";
 import { ensureSubscription } from "./lib/billing";
+import { clientIp, rateLimit } from "./lib/rate-limit";
 
 const credentialsSchema = z.object({ email: z.string().email(), password: z.string().min(1) });
 
 const providers: Provider[] = [
   Credentials({
     credentials: { email: { label: "Email", type: "email" }, password: { label: "Password", type: "password" } },
-    async authorize(raw) {
+    async authorize(raw, request) {
       const parsed = credentialsSchema.safeParse(raw);
       if (!parsed.success) return null;
+      // Slow down password guessing: counts every attempt per IP + email.
+      const attempt = await rateLimit("login", `${clientIp(request.headers)}:${parsed.data.email.toLowerCase()}`);
+      if (!attempt.ok) return null;
       const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() } });
       if (!user?.passwordHash) return null;
       const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);

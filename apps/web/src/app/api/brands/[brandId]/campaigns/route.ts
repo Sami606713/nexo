@@ -19,6 +19,7 @@ import {
   perDayOf,
   type Frequency,
 } from "@/components/campaigns/campaignMath";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Ctx = { params: Promise<{ brandId: string }> };
 
@@ -91,6 +92,7 @@ export const GET = route<Ctx>(async (_req, { params }) => {
 export const POST = route<Ctx>(async (req, { params }) => {
   const { brandId } = await params;
   const access = await requireBrand(brandId, "posts.write");
+  await enforceRateLimit("campaign", access.user.id);
   const input = await readBody(req, createInput);
 
   const days = daysBetween(input.startDate, input.endDate);

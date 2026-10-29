@@ -52,18 +52,40 @@ const localDriver: StorageDriver = {
   },
 };
 
-const blobDriver: StorageDriver = {
+/**
+ * The Blob token. Vercel names it BLOB_READ_WRITE_TOKEN by default, or <PREFIX>_READ_WRITE_TOKEN when the store was
+ * connected with a custom prefix; tokens always start with "vercel_blob_rw_".
+ */
+export function blobToken(): string | undefined {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  return Object.entries(process.env).find(([k, v]) => k.endsWith("_READ_WRITE_TOKEN") && v?.startsWith("vercel_blob_rw_"))?.[1];
+}
+
+function blobDriver(token: string): StorageDriver {
+  return {
+    name: "blob",
+    async put(key, bytes, contentType) {
+      const k = safeKey(key);
+      const res = await put(k, Buffer.from(bytes), { access: "public", contentType, addRandomSuffix: false, allowOverwrite: true, token });
+      return { key: k, url: res.url };
+    },
+    async delete(key) {
+      await del(safeKey(key), { token }).catch(() => undefined);
+    },
+  };
+}
+
+/** Vercel's filesystem is read-only: without a Blob store, fail with a message that says what to do. */
+const unconfiguredDriver: StorageDriver = {
   name: "blob",
-  async put(key, bytes, contentType) {
-    const k = safeKey(key);
-    const res = await put(k, Buffer.from(bytes), { access: "public", contentType, addRandomSuffix: false, allowOverwrite: true });
-    return { key: k, url: res.url };
+  async put() {
+    throw new Error("Media storage isn't set up: connect a Vercel Blob store to this project (Storage > Blob), then redeploy.");
   },
-  async delete(key) {
-    await del(safeKey(key)).catch(() => undefined);
-  },
+  async delete() {},
 };
 
 export function storage(): StorageDriver {
-  return process.env.BLOB_READ_WRITE_TOKEN ? blobDriver : localDriver;
+  const token = blobToken();
+  if (token) return blobDriver(token);
+  return process.env.VERCEL ? unconfiguredDriver : localDriver;
 }

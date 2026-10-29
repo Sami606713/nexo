@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@postline/db";
 import { PLAN_LIMITS } from "@postline/core";
 import { conflict, parseBody, route } from "@/lib/http";
+import { clientIp, enforceRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
@@ -11,6 +12,9 @@ const schema = z.object({
 });
 
 export const POST = route(async (req) => {
+  const ip = clientIp(req.headers);
+  await enforceRateLimit("signup", ip);
+  await enforceRateLimit("signupDaily", ip);
   const { name, email, password } = await parseBody(req, schema);
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true, passwordHash: true } });
   if (existing?.passwordHash) throw conflict("An account with this email already exists. Sign in instead.");

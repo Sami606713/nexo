@@ -4,6 +4,7 @@ import { withCredits } from "@postline/ai";
 import { notFound, parseBody, route } from "@/lib/http";
 import { requireBrand } from "@/lib/session";
 import { runAgent } from "@/lib/workflows/agent";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Ctx = { params: Promise<{ brandId: string; id: string }> };
 
@@ -11,6 +12,7 @@ type Ctx = { params: Promise<{ brandId: string; id: string }> };
 export const POST = route<Ctx>(async (req, { params }) => {
   const { brandId, id } = await params;
   const { user, brand } = await requireBrand(brandId, "posts.write");
+  await enforceRateLimit("ai", user.id);
   const agent = await prisma.aIAgent.findFirst({ where: { id, brandId } });
   if (!agent) throw notFound("Agent not found");
   const { input } = await parseBody(req, z.object({ input: z.string().trim().min(1, "Enter some test input").max(8000) }));

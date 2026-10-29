@@ -812,6 +812,33 @@ async function replicateGenerate(req: ImageGenRequest & { count: number }, token
   return out.slice(0, req.count);
 }
 
+/** The image provider is overloaded (429 / 5xx after retries). Surfaced to users as "busy, try again". */
+export class ImageBusyError extends Error {
+  constructor(status: number) {
+    super(`The image service is busy right now (${status}). Please try again in a minute.`);
+    this.name = "ImageBusyError";
+  }
+}
+
+const BUSY_DELAYS_MS = [2_000, 5_000];
+const isBusy = (status: number) => status === 429 || status === 502 || status === 503 || status === 504;
+
+/**
+ * Retry a provider call while it reports being busy (429/502/503/504), honouring Retry-After up to 10 s.
+ * Other responses (including errors) are returned as-is; a still-busy provider ends in ImageBusyError.
+ */
+export async function withBusyRetry(call: () => Promise<Response>, delays: readonly number[] = BUSY_DELAYS_MS): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await call();
+    if (!isBusy(res.status)) return res;
+    if (attempt >= delays.length) throw new ImageBusyError(res.status);
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 10_000) : delays[attempt]!;
+    await res.body?.cancel().catch(() => undefined);
+    await new Promise((r) => setTimeout(r, wait));
+  }
+}
+
 /**
  * OpenAI-compatible image endpoint that returns hosted URLs (Agnes AI: agnes-image-2.5-flash).
  * One request per image (keeps latency predictable), at most 2 in flight.
@@ -824,12 +851,14 @@ async function compatGenerate(
   const [sw, sh] = nearestOpenAiSize(req.width, req.height);
   const url = `${cfg.baseUrl.replace(/\/+$/, "")}/images/generations`;
   const one = async (): Promise<GeneratedImage> => {
-    const res = await fetchImpl(url, {
-      method: "POST",
-      headers: { authorization: `Bearer ${cfg.apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify({ model: cfg.model, prompt: buildImagePrompt(req), n: 1, size: `${sw}x${sh}` }),
-      signal: AbortSignal.timeout(180_000),
-    });
+    const res = await withBusyRetry(() =>
+      fetchImpl(url, {
+        method: "POST",
+        headers: { authorization: `Bearer ${cfg.apiKey}`, "content-type": "application/json" },
+        body: JSON.stringify({ model: cfg.model, prompt: buildImagePrompt(req), n: 1, size: `${sw}x${sh}` }),
+        signal: AbortSignal.timeout(180_000),
+      }),
+    );
     const body = (await res.json().catch(() => null)) as
       | { data?: { url?: string; b64_json?: string }[]; error?: { message?: string } }
       | null;

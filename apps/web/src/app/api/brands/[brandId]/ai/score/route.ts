@@ -5,6 +5,7 @@ import { readBody } from "@/lib/posts/body";
 import { requireBrand } from "@/lib/session";
 import { aiScoreInput } from "@/lib/posts/ai-inputs";
 import { brandChannels } from "@/lib/posts/ai-helpers";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Ctx = { params: Promise<{ brandId: string }> };
 
@@ -18,6 +19,7 @@ export const POST = route<Ctx>(async (req, { params }) => {
   if (!input.useLlm) return scorePostHeuristic(scoreInput);
   // LLM scoring is a paid write-ish action — require write access.
   await requireBrand(brandId, "posts.write");
+  await enforceRateLimit("ai", access.user.id);
   return withCredits(
     { brandId: access.brand.id, actorId: access.user.id, reason: "score_fix", amount: 1 },
     () => ai.scorePost(scoreInput, { useLlm: true }),

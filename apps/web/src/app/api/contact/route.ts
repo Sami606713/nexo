@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { HttpError, parseBody, route } from "@/lib/http";
+import { parseBody, route } from "@/lib/http";
+import { clientIp, enforceRateLimit } from "@/lib/rate-limit";
 import { sendMail } from "@/lib/mail";
 
 const schema = z.object({
@@ -9,17 +10,9 @@ const schema = z.object({
   message: z.string().trim().min(10).max(5000),
 });
 
-// Naive per-process limit: 5 messages per IP per 10 minutes.
-const hits = new Map<string, number[]>();
-const WINDOW_MS = 10 * 60_000;
-
 /** Public contact form → email to SUPPORT_EMAIL (logged to the console in dev when no mailer is configured). */
 export const POST = route(async (req) => {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= 5) throw new HttpError(429, "Too many messages — please try again in a few minutes.");
-  hits.set(ip, [...recent, now]);
+  await enforceRateLimit("contact", clientIp(req.headers));
 
   const m = await parseBody(req, schema);
   await sendMail({

@@ -9,12 +9,14 @@ import { ai, brandContext, hasApiKey, withCredits } from "@postline/ai";
 import { badRequest, route } from "@/lib/http";
 import { requireBrand } from "@/lib/session";
 import { loadConversation, postContext, templateReply } from "../../../inbox/_lib/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Ctx = { params: Promise<{ brandId: string; id: string }> };
 
 export const POST = route<Ctx>(async (_req, { params }) => {
   const { brandId, id } = await params;
   const { user, brand } = await requireBrand(brandId, "posts.write");
+  await enforceRateLimit("ai", user.id);
   const conv = await loadConversation(brandId, id);
   const last = await prisma.message.findMany({
     where: { conversationId: id },

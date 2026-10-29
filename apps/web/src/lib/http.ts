@@ -52,6 +52,7 @@ export function route<Ctx = { params: Promise<Record<string, string>> }>(handler
           return NextResponse.json({ error: "AI isn't configured on this server yet." }, { status: 503 });
         if (err.name === "AiRefusalError")
           return NextResponse.json({ error: "The AI declined this request. Try rephrasing it." }, { status: 422 });
+        if (err.name === "ImageBusyError") return NextResponse.json({ error: err.message }, { status: 503 });
         if (err.name === "AiOutputError")
           return NextResponse.json({ error: "The AI returned an unusable result. Please try again." }, { status: 502 });
         if (err.name === "UnsafeUrlError")
