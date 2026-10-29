@@ -1,8 +1,6 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { Worker, type Job } from "bullmq";
+import { storage } from "@postline/core/storage";
 import type IORedis from "ioredis";
 import { prisma, type Brand } from "@postline/db";
 import { InsufficientCreditsError, QUEUES, type Network, type WorkflowRunJob } from "@postline/core";
@@ -60,15 +58,6 @@ const errMessage = (err: unknown) => {
 };
 const str = (v: unknown) => (typeof v === "string" ? v : v === undefined || v === null ? "" : String(v));
 
-function uploadsDir(): string {
-  if (process.env.UPLOADS_DIR) return process.env.UPLOADS_DIR;
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(here, "../../../web/public/uploads");
-}
-function appUrl() {
-  return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
-}
-
 // ───────────────────────── sample inputs for manual runs ─────────────────────────
 
 async function resolveManualInput(wf: WorkflowRow, input: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -109,10 +98,7 @@ async function stepAiAgent(wf: WorkflowRow, cfg: Record<string, unknown>, ctx: T
       if (img) {
         const ext = img.mime.includes("svg") ? "svg" : img.mime.includes("jpeg") ? "jpg" : "png";
         const key = `${wf.brandId}/wf-${randomUUID()}.${ext}`;
-        const abs = path.join(uploadsDir(), key);
-        await mkdir(path.dirname(abs), { recursive: true });
-        await writeFile(abs, img.bytes);
-        const url = `${appUrl()}/uploads/${key}`;
+        const { url } = await storage().put(key, img.bytes, img.mime);
         const asset = await prisma.mediaAsset.create({
           data: { brandId: wf.brandId, url, key, mime: img.mime, width: img.width, height: img.height, sizeBytes: img.bytes.byteLength, source: "ai" },
         });

@@ -1,8 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { Worker, type Job } from "bullmq";
+import { storage } from "@postline/core/storage";
 import { prisma } from "@postline/db";
 import { CREDIT_COST, InsufficientCreditsError, QUEUES, type AiGenerateJob, type CampaignPlanItem, type ImageGenRequest, type Network } from "@postline/core";
 import { ai, brandContext, hasApiKey, images, offlineCampaign, withCredits } from "@postline/ai";
@@ -102,16 +100,9 @@ function hexColors(v: unknown): string[] {
 }
 
 const EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/svg+xml": "svg" };
-/** Same layout as the web app's local storage driver (apps/web/public/uploads/<brandId>/<file>). */
-const UPLOADS_DIR = process.env.UPLOADS_DIR ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../web/public/uploads");
-const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
-
 async function storeImage(brandId: string, bytes: Uint8Array, mime: string) {
   const key = `${brandId}/ai-${randomUUID().replace(/-/g, "")}.${EXT[mime] ?? "png"}`;
-  const abs = path.join(UPLOADS_DIR, key);
-  await mkdir(path.dirname(abs), { recursive: true });
-  await writeFile(abs, bytes);
-  return { key, url: `${appUrl()}/uploads/${key}` };
+  return storage().put(key, bytes, mime);
 }
 
 async function setProgress(campaignId: string, progress: { stage: "writing" | "images"; done: number; total: number }) {

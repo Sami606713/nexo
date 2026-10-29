@@ -21,7 +21,7 @@ export const PRIVACY: LegalDoc = {
         "Account information: your name, email address and password (stored as a secure hash), or your Google profile if you sign in with Google.",
         "Content you create: brands, posts, media, designs, campaigns, workflows and messages you write in the product.",
         "Connected accounts: when you connect a social network, we receive the permissions you approve on that network's sign-in screen and basic profile details such as the account name and picture. Access is managed through our integration provider; we never see your social network passwords.",
-        "Usage data: basic logs needed to operate, secure and improve the service.",
+        "Usage data: basic logs needed to operate, secure and improve the service, and anonymous page-view statistics (Vercel Web Analytics, which uses no cookies).",
       ],
     },
     {
