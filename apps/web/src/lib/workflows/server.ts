@@ -18,7 +18,7 @@ import { validateWorkflow, type WorkflowErrors } from "./validate";
 export const json = (v: unknown) => v as Prisma.InputJsonValue;
 
 export function appUrl() {
-  return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+  return (process.env.APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")).replace(/\/+$/, "");
 }
 
 export const webhookUrl = (secret: string) => `${appUrl()}/api/hooks/wf/${secret}`;

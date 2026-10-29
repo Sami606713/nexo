@@ -38,7 +38,8 @@ export async function sendMail(input: MailInput): Promise<"resend" | "smtp" | "c
 }
 
 export function appUrl(path = ""): string {
-  const base = (process.env.APP_URL ?? process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  // On Vercel without APP_URL, use the production domain Vercel provides rather than localhost.
+  const base = (process.env.APP_URL || process.env.AUTH_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")).replace(/\/$/, "");
   return `${base}${path}`;
 }
 

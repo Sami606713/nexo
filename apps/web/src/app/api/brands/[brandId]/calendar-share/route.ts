@@ -6,7 +6,7 @@ import { requireBrand } from "@/lib/session";
 type Ctx = { params: Promise<{ brandId: string }> };
 
 function shareUrl(token: string) {
-  return `${(process.env.APP_URL ?? "http://localhost:3000").replace(/\/+$/, "")}/share/calendar/${token}`;
+  return `${(process.env.APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")).replace(/\/+$/, "")}/share/calendar/${token}`;
 }
 
 function dto(s: { id: string; token: string; createdAt: Date; createdBy: string }) {
