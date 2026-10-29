@@ -1,6 +1,7 @@
 {
   "name": "postline",
   "private": true,
+  "packageManager": "npm@11.19.1",
   "version": "0.1.0",
   "workspaces": [
     "apps/*",
