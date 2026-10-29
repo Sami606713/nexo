@@ -17,7 +17,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { IconCheck, IconRefresh, IconSparkles } from "@tabler/icons-react";
-import type { Network } from "@postline/core";
+import { CREDIT_COST, type Network } from "@postline/core";
 import { api } from "@/lib/fetcher";
 import type { MediaDTO } from "@/lib/posts/types";
 import { notifyError } from "@/components/posts/utils";
@@ -196,7 +196,7 @@ export function AiImageModal({ brandId, opened, onClose, caption = "", networks 
 
         <Group justify="space-between">
           <Badge variant="light" color="violet" size="lg">
-            {count} credit{count > 1 ? "s" : ""}
+            {count * CREDIT_COST.image} credits
           </Badge>
           <Button leftSection={results.length ? <IconRefresh size={16} /> : <IconSparkles size={16} />} loading={busy} onClick={generate} disabled={prompt.trim().length < 3}>
             {results.length ? "Generate more" : "Generate"}

@@ -30,6 +30,7 @@ import {
   IconChartBar,
   IconInbox,
   IconLink,
+  IconLock,
   IconRocket,
   IconTopologyStar3,
   IconSpeakerphone,
@@ -55,6 +56,7 @@ import { Logo } from "@/components/ui/Logo";
 import { BrandProvider, useBrand, type BrandContextValue } from "./BrandContext";
 import { CreditsWidget } from "./CreditsWidget";
 import { LAST_BRAND_COOKIE } from "./constants";
+import { INBOX_RELEASED } from "@/lib/features";
 
 export interface ShellProps {
   brand: { id: string; name: string; timezone: string; weekStart: number };
@@ -240,7 +242,7 @@ function MainNav() {
   );
   const settings = [
     b.can("members.manage") || b.can("posts.approve") ? { href: "/settings/team", label: "Team", icon: <IconUsers size={16} /> } : null,
-    b.can("billing.manage") ? { href: "/settings/billing", label: "Billing", icon: <IconCreditCard size={16} /> } : null,
+    // Nexo is free: no Billing page in the navigation (the route still exists for usage/credits history).
     { href: "/settings/labels", label: "Labels", icon: <IconTag size={16} /> },
     { href: "/settings/hashtags", label: "Hashtags", icon: <IconHash size={16} /> },
   ].filter((x): x is NonNullable<typeof x> => !!x);
@@ -249,7 +251,22 @@ function MainNav() {
       {link("/planner", "Planner", <IconCalendarEvent size={18} />)}
       {link("/campaigns", "Campaigns", <IconSpeakerphone size={18} />)}
       {link("/studio", "Studio", <IconBrush size={18} />)}
-      {link("/inbox", "Inbox", <IconInbox size={18} />, <InboxBadge brandId={b.brandId} />)}
+      {INBOX_RELEASED ? (
+        link("/inbox", "Inbox", <IconInbox size={18} />, <InboxBadge brandId={b.brandId} />)
+      ) : (
+        <NavLink
+          label="Inbox"
+          leftSection={<IconInbox size={18} />}
+          rightSection={
+            <Badge size="xs" variant="light" color="gray" leftSection={<IconLock size={10} />}>
+              Soon
+            </Badge>
+          }
+          disabled
+          title="Coming soon"
+          style={{ borderRadius: 8 }}
+        />
+      )}
       {link("/workflows", "Workflows", <IconTopologyStar3 size={18} />)}
       {link("/analytics", "Analytics", <IconChartBar size={18} />)}
       {link("/bio", "Bio pages", <IconLink size={18} />)}

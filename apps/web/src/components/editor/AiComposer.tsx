@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Anchor, Badge, Button, Group, Paper, SegmentedControl, Select, Stack, Switch, Text, Textarea, Title, Tooltip } from "@mantine/core";
 import { getHotkeyHandler } from "@mantine/hooks";
 import { IconArrowLeft, IconPhoto, IconSparkles } from "@tabler/icons-react";
-import type { Length, Tone } from "@postline/core";
+import { CREDIT_COST, type Length, type Tone } from "@postline/core";
 import { api } from "@/lib/fetcher";
 import { useBrand } from "@/components/shell/BrandContext";
 import { IdeaChips } from "@/components/posts/IdeaChips";
@@ -32,7 +32,7 @@ export function AiComposer({ initialPrompt = "" }: { initialPrompt?: string }) {
   const [withImages, setWithImages] = useState(false);
   const [imagesCount, setImagesCount] = useState(1);
   const images = withImages ? imagesCount : 0;
-  const cost = 1 + images;
+  const cost = CREDIT_COST.caption + images * CREDIT_COST.image;
 
   async function generate() {
     if (prompt.trim().length < 3) return notifyError(new Error("Describe the post you want to create"));
@@ -165,7 +165,7 @@ export function AiComposer({ initialPrompt = "" }: { initialPrompt?: string }) {
           </Group>
 
           <Group justify="space-between">
-            <Tooltip label={`1 credit for the caption${images ? ` + ${images} for image${images > 1 ? "s" : ""}` : ""}`} withArrow>
+            <Tooltip label={`1 credit for the caption${images ? ` + ${images * CREDIT_COST.image} for ${images} image${images > 1 ? "s" : ""}` : ""}`} withArrow>
               <Badge variant="light" color="violet" size="lg">
                 {cost} credit{cost > 1 ? "s" : ""}
               </Badge>

@@ -1,0 +1,613 @@
+/* Public site styles. Radius system: cards 16px, media 16px, buttons pill, inputs 8px. One accent: indigo. */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (max-width: 767px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+
+.section {
+  padding: 112px 0;
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding: 72px 0;
+  }
+}
+
+.surface {
+  background: var(--mantine-color-gray-0);
+
+  @mixin dark {
+    background: var(--mantine-color-dark-8);
+  }
+}
+
+.heading {
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.lead {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--mantine-color-dimmed);
+  max-width: 62ch;
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mantine-color-indigo-6);
+  margin: 0 0 12px;
+
+  @mixin dark {
+    color: var(--mantine-color-indigo-4);
+  }
+}
+
+/* ───────── hero ───────── */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 72px 0 96px;
+  min-height: calc(100dvh - 64px);
+  display: flex;
+  align-items: center;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 64px;
+  align-items: center;
+}
+
+@media (max-width: 991px) {
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .hero {
+    min-height: auto;
+    padding: 48px 0 72px;
+  }
+}
+
+.heroTitle {
+  font-size: clamp(40px, 5vw, 60px);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  font-weight: 750;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.heroAccent {
+  color: var(--mantine-color-indigo-6);
+
+  @mixin dark {
+    color: var(--mantine-color-indigo-4);
+  }
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--mantine-color-text) 9%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(70% 60% at 70% 40%, black, transparent);
+}
+
+/* ───────── demo composer (hero visual) ───────── */
+
+.demo {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, white 60%, transparent) inset,
+    0 30px 80px -30px color-mix(in srgb, var(--mantine-color-indigo-9) 35%, transparent);
+  padding: 20px;
+}
+
+.demoField {
+  border-radius: 12px;
+  border: 1px solid var(--mantine-color-default-border);
+  padding: 12px 14px;
+  min-height: 48px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 18px;
+  margin-left: 1px;
+  background: var(--mantine-color-indigo-6);
+  vertical-align: -3px;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.shimmer {
+  height: 10px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--mantine-color-default-hover), var(--mantine-color-default-border), var(--mantine-color-default-hover));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.demoImage {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 340px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+/* ───────── logo marquee ───────── */
+
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  border-top: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  padding: 28px 0;
+}
+
+.marqueeTrack {
+  display: flex;
+  gap: 72px;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+
+.marquee:hover .marqueeTrack {
+  animation-play-state: paused;
+}
+
+.marqueeLogo {
+  display: flex;
+  opacity: 0.55;
+  filter: grayscale(1);
+  transition:
+    opacity 0.3s,
+    filter 0.3s;
+}
+
+.marqueeLogo:hover {
+  opacity: 1;
+  filter: none;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ───────── bento ───────── */
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: minmax(220px, auto);
+  gap: 16px;
+}
+
+.cell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+
+.cellWide {
+  grid-column: span 4;
+  grid-row: span 2;
+}
+.cellTall {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.cellHalf {
+  grid-column: span 3;
+}
+.cellThird {
+  grid-column: span 2;
+}
+
+@media (max-width: 991px) {
+  .bento {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cellWide,
+  .cellTall,
+  .cellHalf,
+  .cellThird {
+    grid-column: span 2;
+    grid-row: auto;
+  }
+}
+
+.cellAccent {
+  background: var(--mantine-color-indigo-7);
+  color: white;
+  border-color: transparent;
+}
+
+.cellPhoto {
+  color: white;
+  border-color: transparent;
+  justify-content: flex-end;
+  min-height: 420px;
+}
+
+.cellPhoto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cellPhoto:hover img {
+  transform: scale(1.04);
+}
+
+.cellPhoto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, transparent 30%, rgb(10 10 14 / 0.82));
+}
+
+.cellIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  margin-bottom: auto;
+  background: var(--mantine-color-indigo-light);
+  color: var(--mantine-color-indigo-6);
+}
+
+.cellAccent .cellIcon,
+.cellPhoto .cellIcon {
+  background: rgb(255 255 255 / 0.16);
+  color: white;
+}
+
+.cellTitle {
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin: 20px 0 6px;
+}
+
+.cellBody {
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--mantine-color-dimmed);
+  max-width: 46ch;
+}
+
+.cellAccent .cellBody,
+.cellPhoto .cellBody {
+  color: rgb(255 255 255 / 0.82);
+}
+
+/* spotlight that follows the pointer (position via CSS vars set by motion values) */
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(360px circle at var(--x, 50%) var(--y, 50%), color-mix(in srgb, var(--mantine-color-indigo-5) 14%, transparent), transparent 60%);
+}
+
+.spotlight:hover::before {
+  opacity: 1;
+}
+
+/* ───────── how it works ───────── */
+
+.how {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 80px;
+}
+
+.howSticky {
+  position: sticky;
+  top: 120px;
+  align-self: start;
+}
+
+.howSteps {
+  position: relative;
+  padding-left: 40px;
+}
+
+.howRail {
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--mantine-color-default-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.howRailFill {
+  position: absolute;
+  inset: 0;
+  background: var(--mantine-color-indigo-6);
+  transform-origin: top;
+}
+
+.howStep {
+  position: relative;
+  padding: 8px 0 72px;
+}
+
+.howStep:last-child {
+  padding-bottom: 8px;
+}
+
+.howDot {
+  position: absolute;
+  left: -40px;
+  top: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 99px;
+  border: 2px solid var(--mantine-color-indigo-6);
+  background: var(--mantine-color-body);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mantine-color-indigo-6);
+}
+
+@media (max-width: 991px) {
+  .how {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .howSticky {
+    position: static;
+  }
+}
+
+/* ───────── integrations ───────── */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 991px) {
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+  padding: 24px;
+  isolation: isolate;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s;
+}
+
+.tile:hover {
+  transform: translateY(-4px);
+  border-color: var(--mantine-color-indigo-4);
+}
+
+/* ───────── free statement ───────── */
+
+.free {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  min-height: 520px;
+  display: flex;
+  align-items: flex-end;
+  color: white;
+  isolation: isolate;
+}
+
+.free img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.free::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgb(12 12 18 / 0.86) 0%, rgb(12 12 18 / 0.55) 55%, rgb(12 12 18 / 0.2) 100%);
+}
+
+.freeInner {
+  padding: 56px;
+  max-width: 680px;
+}
+
+@media (max-width: 767px) {
+  .freeInner {
+    padding: 32px 24px;
+  }
+}
+
+.freePoints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 28px;
+}
+
+/* ───────── buttons ───────── */
+
+.btnPrimary,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.btnPrimary {
+  background: var(--mantine-color-indigo-6);
+  color: white;
+  box-shadow: 0 8px 24px -10px color-mix(in srgb, var(--mantine-color-indigo-7) 70%, transparent);
+}
+
+.btnPrimary:hover {
+  background: var(--mantine-color-indigo-7);
+}
+
+.btnGhost {
+  color: var(--mantine-color-text);
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+}
+
+.btnGhost:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.btnPrimary:active,
+.btnGhost:active {
+  transform: scale(0.98);
+}
+
+.btnLight {
+  background: white;
+  color: var(--mantine-color-indigo-8);
+  box-shadow: none;
+}
+
+.btnLight:hover {
+  background: var(--mantine-color-gray-1);
+}
+
+/* ───────── page header ───────── */
+
+.pageHeader {
+  padding: 88px 0 24px;
+}
+
+@media (max-width: 767px) {
+  .pageHeader {
+    padding: 56px 0 16px;
+  }
+}
+
+.pageTitle {
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  font-weight: 750;
+  margin: 0 0 18px;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.rounded {
+  border-radius: 16px;
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack,
+  .caret,
+  .shimmer {
+    animation: none;
+  }
+  .cellPhoto img,
+  .tile {
+    transition: none;
+  }
+}

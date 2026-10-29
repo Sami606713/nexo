@@ -75,7 +75,7 @@ export const TERMS: LegalDoc = {
       heading: "Your content",
       body: [
         "You own the content you create and publish. You give us permission to store, process and publish it on the networks you choose, solely to provide the service.",
-        "You're responsible for what you publish, including AI-generated content — please review it before it goes out.",
+        "You're responsible for what you publish, including AI-generated content. Please review it before it goes out.",
       ],
     },
     {
@@ -91,9 +91,9 @@ export const TERMS: LegalDoc = {
       ],
     },
     {
-      heading: "Plans and credits",
+      heading: "Free service and AI allowance",
       body: [
-        "Paid plans renew automatically until cancelled. AI credits refill monthly and don't roll over.",
+        `${APP_NAME} is provided free of charge. AI features have a monthly allowance that refills each month and doesn't roll over. We may adjust the allowance to keep the service sustainable.`,
       ],
     },
     {

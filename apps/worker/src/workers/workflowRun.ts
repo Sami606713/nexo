@@ -230,7 +230,7 @@ async function stepInboxReply(wf: WorkflowRow, kind: "reply_comment" | "send_dm"
   if (kind === "send_dm" && conv.kind !== "DM") {
     return { status: "skipped", output: { text }, note: "skipped: private replies to comments aren't supported — use “Reply to comment”" };
   }
-  const provider = getInboxProvider(conv.channel.network as Network);
+  const provider = getInboxProvider(conv.channel.network as Network, conv.channel);
   if (!provider || !conv.channel.inboxEnabled) return { status: "skipped", output: { text }, note: "skipped: inbox not connected for this channel" };
   const target = {
     kind: conv.kind as "DM" | "COMMENT" | "MENTION",

@@ -34,7 +34,7 @@ export const GET = route<Ctx>(async (_req, { params }) => {
         avatarUrl: c.avatarUrl,
         health: c.health,
         inboxEnabled: c.inboxEnabled,
-        supported: inboxSupported(c.network as Network),
+        supported: inboxSupported(c.network as Network, c),
         live: isLiveChannel(c),
         demo: isDemoChannel(extras),
         syncedAt: typeof extras.inboxSyncedAt === "string" ? extras.inboxSyncedAt : null,

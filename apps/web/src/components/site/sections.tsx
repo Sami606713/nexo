@@ -1,45 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import {
-  Accordion,
-  Avatar,
-  Badge,
-  Box,
-  Button,
-  Card,
-  Container,
-  Group,
-  List,
-  Paper,
-  SegmentedControl,
-  SimpleGrid,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title,
-} from "@mantine/core";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { motion, useMotionTemplate, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
+import { Accordion, Text } from "@mantine/core";
 import {
   IconArrowRight,
   IconCalendarEvent,
   IconChartBar,
-  IconCheck,
   IconCircleCheck,
+  IconGift,
   IconInbox,
   IconLink,
+  IconLockOpen,
   IconPalette,
   IconRocket,
   IconSparkles,
   IconTopologyStar3,
-  IconUsers,
+  IconUsersGroup,
 } from "@tabler/icons-react";
-import { useState } from "react";
-import { PLAN_LIMITS, type PlanId } from "@postline/core";
 import { NetworkIcon } from "@/components/posts/NetworkIcon";
-import { APP_NAME, FAQS, FEATURES, INTEGRATIONS, STEPS, type Feature, type FeatureIcon } from "./content";
+import { FAQS, FEATURES, INTEGRATIONS, SIGNUP_LABEL, STEPS, type Feature, type FeatureIcon } from "./content";
+import { EASE, Reveal, Stagger, StaggerItem, useReducedMotionSafe } from "./motion";
+import s from "./site.module.css";
 
-const ICONS: Record<FeatureIcon, typeof IconSparkles> = {
+export const ICONS: Record<FeatureIcon, typeof IconSparkles> = {
   sparkles: IconSparkles,
   calendar: IconCalendarEvent,
   rocket: IconRocket,
@@ -49,417 +34,346 @@ const ICONS: Record<FeatureIcon, typeof IconSparkles> = {
   chart: IconChartBar,
   check: IconCircleCheck,
   link: IconLink,
-  users: IconUsers,
 };
-
-const GRADIENT = { from: "indigo", to: "violet", deg: 135 } as const;
-const glow =
-  "radial-gradient(900px 420px at 15% 0%, var(--mantine-color-indigo-light), transparent 70%), radial-gradient(700px 380px at 90% 10%, var(--mantine-color-violet-light), transparent 70%)";
 
 /* ───────────── building blocks ───────────── */
 
-export function Section({ children, id, tinted }: { children: ReactNode; id?: string; tinted?: boolean }) {
+export function Section({ children, surface, id }: { children: ReactNode; surface?: boolean; id?: string }) {
   return (
-    <Box id={id} py={{ base: 56, sm: 88 }} style={tinted ? { background: "var(--mantine-color-default-hover)" } : undefined}>
-      <Container size="lg">{children}</Container>
-    </Box>
+    <section id={id} className={`${s.section} ${surface ? s.surface : ""}`}>
+      <div className={s.container}>{children}</div>
+    </section>
   );
 }
 
-export function SectionTitle({ eyebrow, title, subtitle, align = "center" }: { eyebrow?: string; title: ReactNode; subtitle?: ReactNode; align?: "center" | "left" }) {
+export function SectionHead({ eyebrow, title, lead, center }: { eyebrow?: string; title: ReactNode; lead?: ReactNode; center?: boolean }) {
   return (
-    <Stack gap="sm" align={align === "center" ? "center" : "flex-start"} ta={align} mb={{ base: 32, sm: 48 }} maw={align === "center" ? 720 : undefined} mx={align === "center" ? "auto" : undefined}>
-      {eyebrow && (
-        <Badge variant="light" color="indigo" radius="xl" size="lg">
-          {eyebrow}
-        </Badge>
-      )}
-      <Title order={2} fz={{ base: 28, sm: 38 }} lh={1.15} style={{ letterSpacing: -0.8 }}>
+    <Reveal style={{ marginBottom: 56, textAlign: center ? "center" : "left", ...(center ? { display: "flex", flexDirection: "column", alignItems: "center" } : {}) }}>
+      {eyebrow && <p className={s.eyebrow}>{eyebrow}</p>}
+      <h2 className={s.heading} style={{ maxWidth: center ? "20ch" : "22ch" }}>
         {title}
-      </Title>
-      {subtitle && (
-        <Text c="dimmed" fz={{ base: "md", sm: "lg" }}>
-          {subtitle}
-        </Text>
+      </h2>
+      {lead && (
+        <p className={s.lead} style={{ marginTop: 16 }}>
+          {lead}
+        </p>
       )}
-    </Stack>
+    </Reveal>
   );
 }
 
-/** Header band for inner pages. */
-export function PageHeader({ eyebrow, title, subtitle }: { eyebrow?: string; title: string; subtitle?: string }) {
+export function PageHeader({ title, lead, eyebrow }: { title: string; lead?: string; eyebrow?: string }) {
+  const reduce = useReducedMotionSafe();
   return (
-    <Box style={{ background: glow }} pt={{ base: 56, sm: 88 }} pb={{ base: 24, sm: 40 }}>
-      <Container size="lg">
-        <SectionTitle eyebrow={eyebrow} title={title} subtitle={subtitle} />
-      </Container>
-    </Box>
+    <header className={s.pageHeader}>
+      <div className={s.container}>
+        {eyebrow && <p className={s.eyebrow}>{eyebrow}</p>}
+        <motion.h1
+          className={s.pageTitle}
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: EASE }}
+        >
+          {title}
+        </motion.h1>
+        {lead && (
+          <motion.p
+            className={s.lead}
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.12, ease: EASE }}
+          >
+            {lead}
+          </motion.p>
+        )}
+      </div>
+    </header>
   );
 }
 
-/* ───────────── landing sections ───────────── */
+/* ───────────── logo marquee (the page's only marquee) ───────────── */
 
-export function Hero() {
+export function LogoMarquee() {
+  const logos = [...INTEGRATIONS, ...INTEGRATIONS];
   return (
-    <Box style={{ background: glow }} pt={{ base: 56, sm: 96 }} pb={{ base: 48, sm: 80 }}>
-      <Container size="lg">
-        <Stack align="center" ta="center" gap="lg" maw={820} mx="auto">
-          <Badge variant="light" color="violet" radius="xl" size="lg" leftSection={<IconSparkles size={14} />}>
-            AI-powered social media management
-          </Badge>
-          <Title order={1} fz={{ base: 38, sm: 60 }} lh={1.05} style={{ letterSpacing: -1.5 }}>
-            Create a month of social posts{" "}
-            <Text span inherit variant="gradient" gradient={GRADIENT}>
-              in an afternoon
-            </Text>
-          </Title>
-          <Text c="dimmed" fz={{ base: "md", sm: "xl" }} maw={640}>
-            {APP_NAME} writes, designs and schedules your posts for LinkedIn, Instagram, Facebook, Pinterest, Reddit and more — in your brand voice, from
-            one calendar.
-          </Text>
-          <Group gap="sm" justify="center">
-            <Button component={Link} href="/signup" size="lg" radius="xl" variant="gradient" gradient={GRADIENT} rightSection={<IconArrowRight size={18} />}>
-              Get started free
-            </Button>
-            <Button component={Link} href="/features" size="lg" radius="xl" variant="default">
-              See how it works
-            </Button>
-          </Group>
-          <Text size="sm" c="dimmed">
-            No credit card required · Connect your first channel in two clicks
-          </Text>
-        </Stack>
-        <ProductPreview />
-      </Container>
-    </Box>
+    <div className={s.marquee} aria-label="Networks you can publish to">
+      <div className={s.marqueeTrack}>
+        {logos.map((i, idx) => (
+          <span key={`${i.network}-${idx}`} className={s.marqueeLogo} aria-hidden={idx >= INTEGRATIONS.length} title={i.name}>
+            <NetworkIcon network={i.network} size={34} />
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
-/** Lightweight, illustrative preview of the planner (pure UI, no data). */
-function ProductPreview() {
+/* ───────────── bento ───────────── */
+
+/** Card whose border glow follows the pointer (motion values, no React re-renders). */
+function SpotlightCell({ className, children }: { className?: string; children: ReactNode }) {
+  const x = useMotionValue(-400);
+  const y = useMotionValue(-400);
+  const style = { "--x": useMotionTemplate`${x}px`, "--y": useMotionTemplate`${y}px` } as unknown as React.CSSProperties;
+  return (
+    <StaggerItem
+      className={`${s.cell} ${s.spotlight} ${className ?? ""}`}
+      style={style}
+      onPointerMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        x.set(e.clientX - r.left);
+        y.set(e.clientY - r.top);
+      }}
+    >
+      {children}
+    </StaggerItem>
+  );
+}
+
+/** Mini week view: a post moves from Tuesday to Thursday and back, showing drag-to-reschedule. */
+function WeekDemo() {
+  const reduce = useReducedMotionSafe();
+  const [day, setDay] = useState(1);
+  useEffect(() => {
+    if (reduce) return;
+    const t = setInterval(() => setDay((d) => (d === 1 ? 3 : 1)), 2600);
+    return () => clearInterval(t);
+  }, [reduce]);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-  const posts: Array<{ day: number; network: (typeof INTEGRATIONS)[number]["network"]; text: string; time: string; status: string; color: string }> = [
-    { day: 0, network: "LINKEDIN", text: "3 lessons from our first year", time: "09:00", status: "Posted", color: "teal" },
-    { day: 1, network: "INSTAGRAM", text: "New autumn menu is here 🍂", time: "12:30", status: "Scheduled", color: "indigo" },
-    { day: 2, network: "PINTEREST", text: "Cozy café corner ideas", time: "18:00", status: "Scheduled", color: "indigo" },
-    { day: 3, network: "FACEBOOK", text: "Live music this Friday!", time: "17:00", status: "Pending approval", color: "yellow" },
-    { day: 4, network: "REDDIT", text: "AMA: how we roast in small batches", time: "15:00", status: "Draft", color: "gray" },
-  ];
+  const fixed: Record<number, { network: "LINKEDIN" | "FACEBOOK" | "PINTEREST"; time: string }> = {
+    0: { network: "LINKEDIN", time: "9:00" },
+    2: { network: "FACEBOOK", time: "12:30" },
+    4: { network: "PINTEREST", time: "17:00" },
+  };
+  const chipStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    padding: "6px 7px",
+    borderRadius: 8,
+    fontSize: 11,
+    fontWeight: 600,
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+  };
   return (
-    <Paper withBorder radius="xl" shadow="xl" mt={{ base: 40, sm: 64 }} p={{ base: "sm", sm: "lg" }} style={{ overflow: "hidden" }} aria-hidden>
-      <Group justify="space-between" mb="md">
-        <Group gap={6}>
-          {["red", "yellow", "green"].map((c) => (
-            <Box key={c} w={10} h={10} style={{ borderRadius: 99, background: `var(--mantine-color-${c}-5)` }} />
-          ))}
-        </Group>
-        <Text size="xs" c="dimmed">
-          Planner · This week
-        </Text>
-      </Group>
-      <SimpleGrid cols={{ base: 1, xs: 5 }} spacing="sm">
-        {days.map((d, i) => (
-          <Stack key={d} gap={8}>
-            <Text size="xs" fw={700} c="dimmed" tt="uppercase">
-              {d}
-            </Text>
-            {posts
-              .filter((p) => p.day === i)
-              .map((p) => (
-                <Card key={p.text} withBorder radius="md" p="xs">
-                  <Group gap={6} mb={6} wrap="nowrap">
-                    <NetworkIcon network={p.network} size={16} />
-                    <Text size="xs" c="dimmed">
-                      {p.time}
-                    </Text>
-                  </Group>
-                  <Text size="sm" fw={500} lineClamp={2}>
-                    {p.text}
-                  </Text>
-                  <Badge mt={8} size="xs" variant="light" color={p.color}>
-                    {p.status}
-                  </Badge>
-                </Card>
-              ))}
-          </Stack>
-        ))}
-      </SimpleGrid>
-    </Paper>
+    <div aria-hidden style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 6, marginBottom: 8 }}>
+      {days.map((d, i) => (
+        <div key={d} style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 150, padding: 6, borderRadius: 10, background: "var(--mantine-color-default-hover)", minWidth: 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--mantine-color-dimmed)" }}>{d}</span>
+          {fixed[i] && (
+            <div style={{ ...chipStyle, background: "var(--mantine-color-body)", border: "1px solid var(--mantine-color-default-border)" }}>
+              <NetworkIcon network={fixed[i]!.network} size={12} />
+              {fixed[i]!.time}
+            </div>
+          )}
+          {day === i && (
+            <motion.div
+              layoutId="week-demo-post"
+              transition={{ type: "spring", stiffness: 140, damping: 20 }}
+              style={{ ...chipStyle, background: "var(--mantine-color-indigo-6)", color: "white", boxShadow: "var(--mantine-shadow-md)" }}
+            >
+              Launch
+            </motion.div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
-export function NetworkStrip() {
-  return (
-    <Container size="lg" py={40}>
-      <Text ta="center" size="sm" c="dimmed" mb="lg">
-        Publish to the networks your audience uses
-      </Text>
-      <Group justify="center" gap={36}>
-        {INTEGRATIONS.map((i) => (
-          <Group key={i.network} gap={8} wrap="nowrap">
-            <NetworkIcon network={i.network} size={24} />
-            <Text fw={600} c="dimmed">
-              {i.name}
-            </Text>
-          </Group>
-        ))}
-      </Group>
-    </Container>
-  );
-}
-
-export function FeatureCard({ f, detailed }: { f: Feature; detailed?: boolean }) {
+function CellText({ f }: { f: Feature }) {
   const Icon = ICONS[f.icon];
   return (
-    <Card withBorder radius="lg" p="xl" h="100%">
-      <ThemeIcon size={44} radius="md" variant="gradient" gradient={GRADIENT} mb="md">
-        <Icon size={24} />
-      </ThemeIcon>
-      <Text fw={700} fz="lg" mb={6}>
-        {f.title}
-      </Text>
-      <Text c="dimmed" size="sm">
-        {f.body}
-      </Text>
-      {detailed && f.points && (
-        <List mt="md" spacing={6} size="sm" icon={<IconCheck size={16} color="var(--mantine-color-teal-6)" />}>
-          {f.points.map((p) => (
-            <List.Item key={p}>{p}</List.Item>
-          ))}
-        </List>
-      )}
-    </Card>
+    <>
+      <span className={s.cellIcon}>
+        <Icon size={22} stroke={1.75} />
+      </span>
+      <h3 className={s.cellTitle}>{f.title}</h3>
+      <p className={s.cellBody}>{f.body}</p>
+    </>
   );
 }
 
-export function FeatureGrid({ limit, detailed }: { limit?: number; detailed?: boolean }) {
+export function FeatureBento() {
   return (
-    <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
-      {FEATURES.slice(0, limit).map((f) => (
-        <FeatureCard key={f.title} f={f} detailed={detailed} />
-      ))}
-    </SimpleGrid>
+    <Stagger className={s.bento}>
+      <StaggerItem className={`${s.cell} ${s.cellPhoto} ${s.cellWide}`}>
+        <img src="/site/creator-desk.jpg" alt="A creator editing content at a desk with a phone on a tripod" loading="lazy" />
+        <CellText f={FEATURES.writer} />
+      </StaggerItem>
+      <SpotlightCell className={s.cellTall}>
+        <WeekDemo />
+        <CellText f={FEATURES.calendar} />
+      </SpotlightCell>
+      <StaggerItem className={`${s.cell} ${s.cellAccent} ${s.cellThird}`}>
+        <CellText f={FEATURES.campaigns} />
+      </StaggerItem>
+      <SpotlightCell className={s.cellThird}>
+        <CellText f={FEATURES.studio} />
+      </SpotlightCell>
+      <SpotlightCell className={s.cellThird}>
+        <CellText f={FEATURES.inbox} />
+      </SpotlightCell>
+      <SpotlightCell className={`${s.cellHalf}`}>
+        <CellText f={FEATURES.automations} />
+      </SpotlightCell>
+      <SpotlightCell className={`${s.cellHalf}`}>
+        <CellText f={FEATURES.analytics} />
+      </SpotlightCell>
+    </Stagger>
   );
 }
 
-export function Steps() {
+/* ───────────── how it works (scroll-linked progress rail) ───────────── */
+
+export function HowItWorks() {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotionSafe();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 70%", "end 60%"] });
+  const fill = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.4 });
   return (
-    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xl">
-      {STEPS.map((s, i) => (
-        <Stack key={s.title} gap="sm">
-          <ThemeIcon size={40} radius="xl" variant="light" color="indigo">
-            <Text fw={800}>{i + 1}</Text>
-          </ThemeIcon>
-          <Text fw={700} fz="lg">
-            {s.title}
-          </Text>
-          <Text c="dimmed" size="sm">
-            {s.body}
-          </Text>
-        </Stack>
-      ))}
-    </SimpleGrid>
+    <div className={s.how}>
+      <div className={s.howSticky}>
+        <p className={s.eyebrow}>How it works</p>
+        <h2 className={s.heading}>From idea to published in three steps</h2>
+        <p className={s.lead} style={{ marginTop: 16 }}>
+          No setup calls, no developer accounts. Most people publish their first post within minutes of signing up.
+        </p>
+      </div>
+      <div ref={ref} className={s.howSteps}>
+        <div className={s.howRail}>
+          <motion.div className={s.howRailFill} style={{ scaleY: reduce ? 1 : fill }} />
+        </div>
+        {STEPS.map((step, i) => (
+          <Step key={step.title} index={i} title={step.title} body={step.body} />
+        ))}
+      </div>
+    </div>
   );
 }
 
-export function AiShowcase() {
+function Step({ index, title, body }: { index: number; title: string; body: string }) {
   return (
-    <SimpleGrid cols={{ base: 1, md: 2 }} spacing={48} style={{ alignItems: "center" }}>
-      <Stack gap="md">
-        <SectionTitle
-          align="left"
-          eyebrow="AI that knows your brand"
-          title="From one sentence to a ready-to-post caption"
-          subtitle="Tell it what you want to say. It writes in your voice, adds the right hashtags, generates an image, and adapts the length for every network."
-        />
-        <List spacing="sm" icon={<IconCheck size={18} color="var(--mantine-color-teal-6)" />}>
-          <List.Item>Captions, hashtags and images in one click</List.Item>
-          <List.Item>A short version for X and a long one for LinkedIn — automatically</List.Item>
-          <List.Item>Post score with specific, one-click improvements</List.Item>
-        </List>
-      </Stack>
-      <Paper withBorder radius="xl" p="lg" shadow="md" aria-hidden>
-        <Stack gap="sm">
-          <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-            Your idea
-          </Text>
-          <Paper radius="md" p="sm" bg="var(--mantine-color-default-hover)">
-            <Text size="sm">Announce our new oat-milk cold brew for summer</Text>
-          </Paper>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={700} mt="xs">
-            {APP_NAME} writes
-          </Text>
-          <Paper withBorder radius="md" p="sm">
-            <Group gap={8} mb={8}>
-              <Avatar size={28} radius="xl" color="indigo">
-                N
-              </Avatar>
-              <Text size="sm" fw={600}>
-                Your brand
-              </Text>
-              <NetworkIcon network="INSTAGRAM" size={16} />
-            </Group>
-            <Text size="sm">
-              Summer just got smoother. ☀️ Our new oat-milk cold brew is slow-steeped for 18 hours, naturally sweet and ridiculously creamy.
-              <br />
-              <br />
-              Which are you trying first — classic or vanilla? 👇
-            </Text>
-            <Text size="sm" c="indigo" mt={6}>
-              #coldbrew #oatmilk #summerdrinks
-            </Text>
-          </Paper>
-          <Group gap="xs">
-            <Badge variant="light" color="teal">
-              Post score 88 · High
-            </Badge>
-            <Badge variant="light" color="gray">
-              1 credit
-            </Badge>
-          </Group>
-        </Stack>
-      </Paper>
-    </SimpleGrid>
+    <Reveal className={s.howStep} delay={index * 0.05}>
+      <span className={s.howDot}>{index + 1}</span>
+      <h3 style={{ fontSize: 24, fontWeight: 650, letterSpacing: "-0.02em", margin: "0 0 10px" }}>{title}</h3>
+      <p className={s.lead} style={{ fontSize: 17 }}>
+        {body}
+      </p>
+    </Reveal>
   );
 }
 
-export function IntegrationGrid() {
+/* ───────────── integrations ───────────── */
+
+export function IntegrationTiles() {
   return (
-    <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="lg">
+    <Stagger className={s.tiles}>
       {INTEGRATIONS.map((i) => (
-        <Card key={i.network} withBorder radius="lg" p="lg">
-          <Group gap="sm" mb="xs" wrap="nowrap">
-            <NetworkIcon network={i.network} size={28} />
-            <Text fw={700}>{i.name}</Text>
-          </Group>
-          <Text size="sm" c="dimmed">
+        <StaggerItem key={i.network} className={s.tile}>
+          <NetworkIcon network={i.network} size={32} />
+          <h3 style={{ fontSize: 18, fontWeight: 650, margin: "18px 0 6px" }}>{i.name}</h3>
+          <p className={s.cellBody} style={{ fontSize: 14 }}>
             {i.what}
-          </Text>
-        </Card>
+          </p>
+        </StaggerItem>
       ))}
-    </SimpleGrid>
+    </Stagger>
   );
 }
 
-const PAID: PlanId[] = ["STARTER", "TEAM", "AGENCY"];
-const PLAN_BLURB: Record<string, string> = {
-  STARTER: "For creators and solo marketers",
-  TEAM: "For growing teams",
-  AGENCY: "For agencies managing many brands",
-};
+/* ───────────── free statement (parallax photo) ───────────── */
 
-export function PricingCards() {
-  const [yearly, setYearly] = useState(true);
+export function FreeStatement() {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotionSafe();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
+  const points = [
+    { icon: IconGift, label: "Free for everyone" },
+    { icon: IconLockOpen, label: "No paywall, no card" },
+    { icon: IconUsersGroup, label: "Built with the community" },
+  ];
   return (
-    <Stack gap="xl">
-      <Group justify="center">
-        <SegmentedControl
-          radius="xl"
-          value={yearly ? "year" : "month"}
-          onChange={(v) => setYearly(v === "year")}
-          data={[
-            { value: "month", label: "Monthly" },
-            { value: "year", label: "Yearly · 2 months free" },
-          ]}
-        />
-      </Group>
-      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
-        {PAID.map((id) => {
-          const p = PLAN_LIMITS[id];
-          const featured = id === "TEAM";
-          const monthly = p.priceMonthlyUsd ?? 0;
-          const price = yearly ? Math.round((monthly * 10) / 12) : monthly;
-          return (
-            <Card
-              key={id}
-              withBorder
-              radius="lg"
-              p="xl"
-              style={featured ? { borderColor: "var(--mantine-color-indigo-5)", borderWidth: 2, boxShadow: "var(--mantine-shadow-lg)" } : undefined}
-            >
-              <Group justify="space-between" mb="xs">
-                <Text fw={700} fz="lg">
-                  {p.label}
-                </Text>
-                {featured && (
-                  <Badge variant="gradient" gradient={GRADIENT}>
-                    Most popular
-                  </Badge>
-                )}
-              </Group>
-              <Text size="sm" c="dimmed" mb="lg">
-                {PLAN_BLURB[id]}
-              </Text>
-              <Group gap={4} align="baseline" mb={4}>
-                <Text fz={40} fw={800} lh={1}>
-                  ${price}
-                </Text>
-                <Text c="dimmed">/month</Text>
-              </Group>
-              <Text size="xs" c="dimmed" mb="lg">
-                {yearly ? `Billed $${monthly * 10} yearly` : "Billed monthly"}
-              </Text>
-              <Button component={Link} href="/signup" radius="xl" variant={featured ? "gradient" : "default"} gradient={GRADIENT} fullWidth mb="lg">
-                Start free trial
-              </Button>
-              <List spacing={8} size="sm" icon={<IconCheck size={16} color="var(--mantine-color-teal-6)" />}>
-                <List.Item>{p.users === 1 ? "1 user" : `${p.users} users`}</List.Item>
-                <List.Item>{p.channels} social channels</List.Item>
-                <List.Item>{p.creditsMonthly.toLocaleString()} AI credits / month</List.Item>
-                <List.Item>Unlimited brands, posts and scheduling</List.Item>
-                <List.Item>AI writer, studio and campaigns</List.Item>
-                <List.Item>Approvals, inbox and automations</List.Item>
-              </List>
-            </Card>
-          );
-        })}
-      </SimpleGrid>
-      <Text ta="center" size="sm" c="dimmed">
-        Need more seats or channels?{" "}
-        <Text component={Link} href="/contact" c="indigo" inherit>
-          Talk to us about Enterprise
-        </Text>
-        .
-      </Text>
-    </Stack>
+    <div ref={ref} className={s.free}>
+      <motion.img src="/site/community.jpg" alt="People gathered at an outdoor community event at golden hour" loading="lazy" style={{ y: reduce ? 0 : y }} />
+      <div className={s.freeInner}>
+        <Reveal>
+          <h2 className={s.heading} style={{ color: "white", fontSize: "clamp(32px, 4.4vw, 54px)" }}>
+            Free for creators, small teams and communities.
+          </h2>
+          <p style={{ fontSize: 18, lineHeight: 1.6, color: "rgb(255 255 255 / 0.82)", margin: "18px 0 0", maxWidth: "52ch" }}>
+            Good tools shouldn&apos;t depend on budget. Every feature is included for every account, from the first post.
+          </p>
+          <div className={s.freePoints}>
+            {points.map((p) => (
+              <span key={p.label} style={{ display: "inline-flex", alignItems: "center", gap: 10, fontWeight: 600 }}>
+                <p.icon size={22} stroke={1.75} /> {p.label}
+              </span>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+    </div>
   );
 }
+
+/* ───────────── FAQ & CTA ───────────── */
 
 export function Faq({ items = FAQS }: { items?: Array<{ q: string; a: string }> }) {
   return (
-    <Accordion variant="separated" radius="lg" maw={760} mx="auto">
-      {items.map((f) => (
-        <Accordion.Item key={f.q} value={f.q}>
-          <Accordion.Control>
-            <Text fw={600}>{f.q}</Text>
-          </Accordion.Control>
-          <Accordion.Panel>
-            <Text c="dimmed" size="sm">
-              {f.a}
-            </Text>
-          </Accordion.Panel>
-        </Accordion.Item>
-      ))}
-    </Accordion>
+    <Reveal>
+      <Accordion variant="separated" radius="lg" maw={780} mx="auto" chevronPosition="right">
+        {items.map((f) => (
+          <Accordion.Item key={f.q} value={f.q}>
+            <Accordion.Control>
+              <Text fw={600} fz="md">
+                {f.q}
+              </Text>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Text c="dimmed" fz="md" lh={1.6}>
+                {f.a}
+              </Text>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ))}
+      </Accordion>
+    </Reveal>
   );
 }
 
 export function CtaBand() {
   return (
-    <Container size="lg" mt={{ base: 56, sm: 88 }}>
-      <Paper radius="xl" p={{ base: "xl", sm: 56 }} style={{ background: "linear-gradient(135deg, var(--mantine-color-indigo-7), var(--mantine-color-violet-7))" }}>
-        <Stack align="center" ta="center" gap="md">
-          <Title order={2} c="white" fz={{ base: 28, sm: 38 }} style={{ letterSpacing: -0.8 }}>
-            Your next month of content starts today
-          </Title>
-          <Text c="rgba(255,255,255,0.85)" maw={560}>
-            Connect a channel, describe your first post, and publish it in minutes.
-          </Text>
-          <Button component={Link} href="/signup" size="lg" radius="xl" color="white" c="indigo.8" rightSection={<IconArrowRight size={18} />}>
-            Get started free
-          </Button>
-        </Stack>
-      </Paper>
-    </Container>
+    <div className={s.container} style={{ marginTop: 24, marginBottom: 24 }}>
+      <Reveal>
+        <div
+          style={{
+            borderRadius: 24,
+            padding: "clamp(40px, 6vw, 72px)",
+            background: "var(--mantine-color-indigo-7)",
+            color: "white",
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            gap: 32,
+            alignItems: "center",
+          }}
+          className="cta-band"
+        >
+          <div>
+            <h2 className={s.heading} style={{ color: "white", maxWidth: "20ch" }}>
+              Your next month of content starts today.
+            </h2>
+            <p style={{ margin: "14px 0 0", fontSize: 18, color: "rgb(255 255 255 / 0.82)" }}>Create your account and publish your first post in minutes.</p>
+          </div>
+          <Link href="/signup" className={`${s.btnPrimary} ${s.btnLight}`}>
+            {SIGNUP_LABEL} <IconArrowRight size={18} />
+          </Link>
+        </div>
+      </Reveal>
+      <style>{`@media (max-width: 767px) { .cta-band { grid-template-columns: 1fr !important; } }`}</style>
+    </div>
   );
 }

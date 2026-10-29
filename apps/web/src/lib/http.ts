@@ -43,7 +43,7 @@ export function route<Ctx = { params: Promise<Record<string, string>> }>(handler
         return NextResponse.json({ error: err.issues[0]?.message ?? "Invalid input", issues: err.issues }, { status: 400 });
       if (err instanceof InsufficientCreditsError)
         return NextResponse.json(
-          { error: "You've run out of credits. Upgrade to get more.", needed: err.needed, remaining: err.remaining },
+          { error: "You've used this month's AI credits. They refill at the start of next month.", needed: err.needed, remaining: err.remaining },
           { status: 402 },
         );
       // @postline/ai errors, matched by name to keep this module free of server-only imports.
