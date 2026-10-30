@@ -1,0 +1,12 @@
+# Build context allowlist for deploy/worker/Dockerfile: only what the worker needs, never secrets.
+*
+!package.json
+!package-lock.json
+!apps/worker
+!apps/web/package.json
+!packages
+**/node_modules
+**/.env*
+**/.turbo
+**/test
+**/*.test.ts

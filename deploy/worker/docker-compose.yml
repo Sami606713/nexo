@@ -1,0 +1,21 @@
+# Nexo worker. Server layout (everything in one folder):
+#   ~/nexo/repo        git checkout of this repository
+#   ~/nexo/worker.env  secrets (chmod 600), never committed
+name: nexo
+services:
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/worker/Dockerfile
+    image: nexo-worker:latest
+    container_name: nexo-worker
+    restart: unless-stopped
+    env_file: ${NEXO_ENV_FILE:-../../../worker.env}
+    # Shares the server with other apps: cap what it can take.
+    mem_limit: 1g
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

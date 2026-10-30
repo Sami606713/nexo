@@ -1,0 +1,53 @@
+# Redeploys the Nexo worker on the Oracle server when worker code changes on main.
+# (The website deploys itself through Vercel's Git integration.)
+#
+# Repository secrets:
+#   ORACLE_HOST         server address, e.g. 79.76.98.190
+#   ORACLE_SSH_KEY      private deploy key; on the server it may only run deploy/worker/deploy.sh
+#   ORACLE_KNOWN_HOSTS  the server's host key line(s), so the connection can't be intercepted
+name: Deploy worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/worker/**"
+      - "packages/**"
+      - "deploy/worker/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy-worker.yml"
+  workflow_dispatch:
+
+# One deploy at a time; a newer push waits for the running one instead of cancelling it mid-build.
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.ORACLE_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Deploy on Oracle
+        env:
+          HOST: ${{ secrets.ORACLE_HOST }}
+        # The key is restricted server-side to running deploy.sh, so no command is sent.
+        run: ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 "opc@$HOST"
+
+      - name: Clean up
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
