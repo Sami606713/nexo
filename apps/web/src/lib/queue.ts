@@ -13,11 +13,17 @@ import {
 
 const g = globalThis as unknown as { __redis?: IORedis; __queues?: Map<string, Queue> };
 
+/** Self-hosted Redis uses its own certificate: REDIS_TLS_CA holds it (PEM, or the PEM base64-encoded). */
+export function redisTls(ca = process.env.REDIS_TLS_CA?.trim()): { tls?: { ca: string } } {
+  if (!ca) return {};
+  return { tls: { ca: ca.includes("BEGIN CERTIFICATE") ? ca : Buffer.from(ca, "base64").toString("utf8") } };
+}
+
 export function connection(): IORedis {
   const url = process.env.REDIS_URL;
-  if (!url && process.env.VERCEL) throw new Error("Redis isn't set up: add REDIS_URL (e.g. an Upstash rediss:// URL) to the project, then redeploy.");
+  if (!url && process.env.VERCEL) throw new Error("Redis isn't set up: add REDIS_URL (a rediss:// URL) to the project, then redeploy.");
   // The web app only adds jobs: fail fast when Redis is unreachable instead of hanging the request until it times out.
-  g.__redis ??= new IORedis(url ?? "redis://127.0.0.1:6380", { maxRetriesPerRequest: 2, connectTimeout: 5_000 });
+  g.__redis ??= new IORedis(url ?? "redis://127.0.0.1:6380", { maxRetriesPerRequest: 2, connectTimeout: 5_000, ...redisTls() });
   return g.__redis;
 }
 
