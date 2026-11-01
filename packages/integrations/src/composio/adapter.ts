@@ -324,7 +324,10 @@ async function instagramContainer(c: Credentials, args: Json): Promise<string> {
   return id;
 }
 
-/** Videos are processed asynchronously; wait until the container is ready before publishing. */
+/**
+ * Instagram processes every container (images and carousels too, not just videos) asynchronously. Publishing one
+ * that isn't FINISHED fails with a generic "unexpected error" (code 2), so always wait until it's ready.
+ */
 async function waitForContainer(c: Credentials, creationId: string): Promise<void> {
   const deadline = Date.now() + 5 * 60_000;
   for (;;) {
@@ -332,7 +335,7 @@ async function waitForContainer(c: Credentials, creationId: string): Promise<voi
     const status = (findString(data, ["status_code", "status"]) ?? "").toUpperCase();
     if (status === "FINISHED" || status === "PUBLISHED" || status === "") return;
     if (status === "ERROR" || status === "EXPIRED") throw new AdapterError("rejected", `Instagram couldn't process the media (${status})`);
-    if (Date.now() > deadline) throw new AdapterError("transient", "Instagram is still processing the video — will retry");
+    if (Date.now() > deadline) throw new AdapterError("transient", "Instagram is still processing the media — will retry");
     await new Promise((r) => setTimeout(r, 5000));
   }
 }
@@ -354,16 +357,17 @@ async function publishInstagram(post: ComposedPost, c: Credentials): Promise<Pub
     const children: string[] = [];
     for (const m of post.media) {
       const id = await instagramContainer(c, igItemArgs(m, true));
-      if (mediaKind(m) === "video") await waitForContainer(c, id);
+      await waitForContainer(c, id);
       children.push(id);
     }
     const data = await run(c, "INSTAGRAM_CREATE_CAROUSEL_CONTAINER", { ig_user_id: cred(c).igUserId, children, caption: post.caption }, "Instagram carousel");
     creationId = findString(data, ["id", "creation_id"]) ?? "";
     if (!creationId) throw new AdapterError("rejected", "Instagram didn't return a carousel id");
+    await waitForContainer(c, creationId);
   } else {
     const m = post.media[0]!;
     creationId = await instagramContainer(c, { ...igItemArgs(m, false), caption: post.caption });
-    if (mediaKind(m) === "video") await waitForContainer(c, creationId);
+    await waitForContainer(c, creationId);
   }
   const data = await run(c, "INSTAGRAM_CREATE_POST", { ig_user_id: cred(c).igUserId, creation_id: creationId }, "Instagram publish");
   const id = findString(data, ["id"]);

@@ -201,6 +201,7 @@ describe("publish", () => {
   it("publishes an Instagram photo via container + publish", async () => {
     mockComposio({
       "INSTAGRAM_CREATE_MEDIA_CONTAINER": ok({ id: "cont1" }),
+      "INSTAGRAM_GET_POST_STATUS": ok({ status_code: "FINISHED" }),
       "INSTAGRAM_CREATE_POST": ok({ id: "media9" }),
     });
     const r = await createComposioAdapter("INSTAGRAM").publish(
@@ -208,7 +209,34 @@ describe("publish", () => {
       { ...creds, igUserId: "17841", username: "acme" },
     );
     expect(r).toMatchObject({ externalId: "media9", url: "https://www.instagram.com/acme/" });
-    expect(calls.map((c) => c.url.split("/").pop())).toEqual(["INSTAGRAM_CREATE_MEDIA_CONTAINER", "INSTAGRAM_CREATE_POST"]);
+    expect(calls.map((c) => c.url.split("/").pop())).toEqual([
+      "INSTAGRAM_CREATE_MEDIA_CONTAINER",
+      "INSTAGRAM_GET_POST_STATUS",
+      "INSTAGRAM_CREATE_POST",
+    ]);
+  });
+
+  it("waits for every Instagram carousel container before publishing", async () => {
+    mockComposio({
+      "INSTAGRAM_CREATE_MEDIA_CONTAINER": ok({ id: "child" }),
+      "INSTAGRAM_GET_POST_STATUS": ok({ status_code: "FINISHED" }),
+      "INSTAGRAM_CREATE_CAROUSEL_CONTAINER": ok({ id: "carousel1" }),
+      "INSTAGRAM_CREATE_POST": ok({ id: "media10" }),
+    });
+    const r = await createComposioAdapter("INSTAGRAM").publish(
+      post({ media: [{ url: "https://cdn.example.com/a.jpg", mime: "image/jpeg" }, { url: "https://cdn.example.com/b.jpg", mime: "image/jpeg" }] }),
+      { ...creds, igUserId: "17841", username: "acme" },
+    );
+    expect(r.externalId).toBe("media10");
+    expect(calls.map((c) => c.url.split("/").pop())).toEqual([
+      "INSTAGRAM_CREATE_MEDIA_CONTAINER",
+      "INSTAGRAM_GET_POST_STATUS",
+      "INSTAGRAM_CREATE_MEDIA_CONTAINER",
+      "INSTAGRAM_GET_POST_STATUS",
+      "INSTAGRAM_CREATE_CAROUSEL_CONTAINER",
+      "INSTAGRAM_GET_POST_STATUS",
+      "INSTAGRAM_CREATE_POST",
+    ]);
   });
 
   it("threads long X posts as replies", async () => {
